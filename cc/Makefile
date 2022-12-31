@@ -1,4 +1,4 @@
-CFLAGS=c11 -g -static
+CFLAGS=-g -static
 
 cc: cc.c
 
