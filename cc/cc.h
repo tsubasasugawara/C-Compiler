@@ -5,99 +5,97 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ------------------------------トークナイザー ------------------------------ */
+/* ------------------------------�g�[�N�i�C�U�[ ------------------------------ */
 
 typedef enum
 {
-    TK_RESERVED, // 記号
-    TK_NUM,      // 整数トークン
-    TK_EOF,      // 入力の終わりを表すトークン
+    TK_RESERVED, // �L��
+    TK_IDENT,    // ���ʎq
+    TK_NUM,      // �����g�[�N��
+    TK_EOF,      // ���͂̏I����\���g�[�N��
 } TokenKind;
 
 typedef struct Token Token;
 
-// トークン型
+// �g�[�N���^
 struct Token
 {
-    TokenKind kind; // トークンの型
-    Token *next;    // 次の入力トークン
-    int val;        // kindがTK_NUMの場合、その数値
-    char *str;      // トークン文字列
-    int len;        // 文字列の長さ
+    TokenKind kind; // �g�[�N���̌^
+    Token *next;    // ���̓��̓g�[�N��
+    int val;        // kind��TK_NUM�̏ꍇ�A���̐��l
+    char *str;      // �g�[�N��������
+    int len;        // ������̒���
 };
 
-// 現在着目しているトークン
+// ���ݒ��ڂ��Ă���g�[�N��
 extern Token *token;
 
-// 入力プログラム
+// ���̓v���O����
 extern char *user_input;
 
-// エラーを報告するための関数
-// printfと同じ引数を取る
+// �G���[��񍐂��邽�߂̊֐�
+// printf�Ɠ������������
 void error(char *fmt, ...);
 
-// エラー箇所を報告する
+// �G���[�ӏ���񍐂���
 void error_at(char *loc, char *fmt, ...);
 
-// 次のトークンが期待している記号のときには、トークンを1つ読み進めて
-// 真を返す。それ以外の場合には偽を返す。
+// ���̃g�[�N�������҂��Ă���L���̂Ƃ��ɂ́A�g�[�N����1�ǂݐi�߂�
+// �^��Ԃ��B����ȊO�̏ꍇ�ɂ͋U��Ԃ��B
 bool consume(char *op);
 
-// 次のトークンが期待している記号のときには、トークンを1つ読み進める。
-// それ以外の場合にはエラーを報告する。
+Token *consume_ident();
+
+// ���̃g�[�N�������҂��Ă���L���̂Ƃ��ɂ́A�g�[�N����1�ǂݐi�߂�B
+// ����ȊO�̏ꍇ�ɂ̓G���[��񍐂���B
 void expect(char *op);
 
-// 次のトークンが数値の場合、トークンを1つ読み進めてその数値を返す。
-// それ以外の場合にはエラーを報告する。
+// ���̃g�[�N�������l�̏ꍇ�A�g�[�N����1�ǂݐi�߂Ă��̐��l��Ԃ��B
+// ����ȊO�̏ꍇ�ɂ̓G���[��񍐂���B
 int expect_number();
 
 bool at_eof();
 
-// 新しいトークンを作成してcurに繋げる
+// �V�����g�[�N�����쐬����cur�Ɍq����
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 
-bool startswith(char *p, char *q);
-
-// 入力文字列pをトークナイズしてそれを返す
+// ���͕�����p���g�[�N�i�C�Y���Ă����Ԃ�
 Token *tokenize();
 
-/* ------------------------------ パーサー ------------------------------ */
+/* ------------------------------ �p�[�T�[ ------------------------------ */
 
-// 抽象構文木のノードの種類
+// ���ۍ\���؂̃m�[�h�̎��
 typedef enum
 {
-    ND_ADD, // +
-    ND_SUB, // -
-    ND_MUL, // *
-    ND_DIV, // /
-    ND_EQ,  // ==
-    ND_NE,  // !=
-    ND_LT,  // <
-    ND_LE,  // <=
-    ND_NUM, // 整数
+    ND_ADD,    // +
+    ND_SUB,    // -
+    ND_MUL,    // *
+    ND_DIV,    // /
+    ND_ASSIGN, // =
+    ND_EQ,     // ==
+    ND_NE,     // !=
+    ND_LT,     // <
+    ND_LE,     // <=
+    ND_LVAR,   // ���[�J���ϐ�
+    ND_NUM,    // ����
 } NodeKind;
 
 typedef struct Node Node;
 
-// 抽象構文木のノードの型
+// ���ۍ\���؂̃m�[�h�̌^
 struct Node
 {
-    NodeKind kind; // ノードの型
-    Node *lhs;     // 左辺
-    Node *rhs;     // 右辺
-    int val;       // kindがND_NUMの場合のみ使う
+    NodeKind kind; // �m�[�h�̌^
+    Node *lhs;     // ����
+    Node *rhs;     // �E��
+    int val;       // kind��ND_NUM�̏ꍇ�̂ݎg��
+    int offset;    // kind��ND_LVAR�̏ꍇ�̂ݎg��
 };
 
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs);
-Node *new_node_num(int val);
-Node *expr();
-Node *equality();
-Node *relational();
-Node *add();
-Node *mul();
-Node *unary();
-Node *primary();
+extern Node *code[100];
 
-/* ------------------------------ コードジェネレータ ------------------------------ */
+void program();
+
+/* ------------------------------ �R�[�h�W�F�l���[�^ ------------------------------ */
 
 void gen(Node *node);
