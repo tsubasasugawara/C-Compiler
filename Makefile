@@ -6,3 +6,7 @@ run:
 
 rmi:
 	docker rmi $$(docker images -q alpine:exec-c)
+
+# make commit m=<arg>
+commit:
+	git add . && git commit -m "${m}"
