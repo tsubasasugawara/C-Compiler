@@ -10,3 +10,8 @@ rmi:
 # make commit m=<arg>
 commit:
 	git add . && git commit -m "${m}"
+
+push:
+	git push -u origin main
+
+.PHONY: build run rmi commit push
