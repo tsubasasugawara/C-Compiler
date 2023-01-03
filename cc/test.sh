@@ -62,5 +62,8 @@ assert 10 "if (0) 2; else 10;"
 assert 5 "a = 3;
 b = 3;
 if(a-b) 1; else a + b - 1;"
+assert 5 "a = 1;
+while (a!=5) a = a + 1;
+a;"
 
 echo OK
