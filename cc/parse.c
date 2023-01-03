@@ -30,7 +30,11 @@ Node *new_node_num(int val)
 
 /*
 program     = stmt*
-stmt        = expr ";" | "return" expr ";"
+stmt        = expr ";" |
+              "if" "(" expr ")" stmt ( "else" stmt)? |
+              "while" "(" expr ")" stmt |
+              for" "(" expr? ")" ";" expr? ";" ";" expr? ")" stmt |
+              "return" expr ";"
 expr        = assign
 assign      = equality ("=" assign)?
 equality    = relational ("==" relational | "!=" relational)*
@@ -67,14 +71,22 @@ Node *stmt()
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
         node->lhs = expr();
+        expect(";");
+    }
+    else if (consume("if"))
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_IF;
+        expect("(");
+        node->condition = expr();
+        expect(")");
+        node->then = stmt();
     }
     else
     {
         node = expr();
+        expect(";");
     }
-
-    if (!consume(";"))
-        error_at(token->str, "expect ';'");
 
     return node;
 }
