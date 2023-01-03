@@ -30,7 +30,7 @@ Node *new_node_num(int val)
 
 /*
 program     = stmt*
-stmt        = expr ";"
+stmt        = expr ";" | "return" expr ";"
 expr        = assign
 assign      = equality ("=" assign)?
 equality    = relational ("==" relational | "!=" relational)*
@@ -60,8 +60,22 @@ void program()
 
 Node *stmt()
 {
-    Node *node = expr();
-    expect(";");
+    Node *node;
+
+    if (consume("return"))
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    }
+    else
+    {
+        node = expr();
+    }
+
+    if (!consume(";"))
+        error_at(token->str, "expect ';'");
+
     return node;
 }
 
