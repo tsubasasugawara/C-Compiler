@@ -1,5 +1,9 @@
 #include "./cc.h"
 
+Token *token;
+char *user_input;
+Node *code[100];
+
 int main(int argc, char **argv)
 {
     if (argc != 2)
@@ -15,7 +19,7 @@ int main(int argc, char **argv)
 
     // アセンブリの前半部分を出力
     printf(".intel_syntax noprefix\n");
-    printf(".global main\n");
+    printf(".globl main\n");
     printf("main:\n");
 
     // プロローグ
@@ -24,11 +28,12 @@ int main(int argc, char **argv)
     printf("    mov rbp, rsp\n");
     printf("    sub rsp, 208\n");
 
+    // 先頭の式から順にコード生成
     for (int i = 0; code[i]; i++)
     {
         gen(code[i]);
 
-        // 式の評価結果としてスタックに1つの値が残っている
+        // 式の評価結果としてスタックに一つの値が残っている
         // はずなので、スタックが溢れないようにポップしておく
         printf("    pop rax\n");
     }

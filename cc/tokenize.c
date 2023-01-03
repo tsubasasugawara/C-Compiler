@@ -1,8 +1,5 @@
 #include "./cc.h"
 
-Token *token;
-char *user_input;
-
 void error(char *fmt, ...)
 {
     va_list ap;
@@ -79,6 +76,11 @@ bool startswith(char *p, char *q)
     return memcmp(p, q, strlen(q)) == 0;
 }
 
+bool is_alphabet(char *p)
+{
+    return ('a' <= *p && *p <= 'z');
+}
+
 Token *tokenize()
 {
     char *p = user_input;
@@ -95,7 +97,10 @@ Token *tokenize()
             continue;
         }
 
-        if (startswith(p, "==") || startswith(p, "!=") || startswith(p, "<=") || startswith(p, ">="))
+        if (startswith(p, "==") ||
+            startswith(p, "!=") ||
+            startswith(p, "<=") ||
+            startswith(p, ">="))
         {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
@@ -108,9 +113,17 @@ Token *tokenize()
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z')
+        if (is_alphabet(p))
         {
-            cur = new_token(TK_IDENT, cur, p++, 1);
+            int i = 1;
+            while (is_alphabet(p + i))
+            {
+                i += 1;
+                continue;
+            }
+
+            cur = new_token(TK_IDENT, cur, p, i);
+            p += i;
             continue;
         }
 

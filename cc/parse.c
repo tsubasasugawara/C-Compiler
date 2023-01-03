@@ -1,5 +1,16 @@
 #include "./cc.h"
 
+// ƒ[ƒJƒ‹•Ï”
+LVar *locals;
+
+LVar *find_lvar(Token *tok)
+{
+    for (LVar *var = locals; var; var = var->next)
+        if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
+            return var;
+    return NULL;
+}
+
 Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
 {
     Node *node = calloc(1, sizeof(Node));
@@ -18,7 +29,7 @@ Node *new_node_num(int val)
 }
 
 /*
-program        = stmt*
+program     = stmt*
 stmt        = expr ";"
 expr        = assign
 assign      = equality ("=" assign)?
@@ -29,7 +40,6 @@ mul         = unary ("*" unary | "/" unary)*
 unary       = ("+" ~ "-")? primay
 primary     = num | ident | "(" expr ")"
 */
-void program();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -39,8 +49,6 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
-
-Node *code[100];
 
 void program()
 {
@@ -158,7 +166,22 @@ Node *primary()
     {
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
-        node->offset = (tok->str[0] - 'a' + 1) * 8;
+
+        LVar *lvar = find_lvar(tok);
+        if (lvar)
+        {
+            node->offset = lvar->offset;
+        }
+        else
+        {
+            lvar = calloc(1, sizeof(LVar));
+            lvar->next = locals;
+            lvar->name = tok->str;
+            lvar->len = tok->len;
+            lvar->offset = locals ? locals->offset + 8 : 8;
+            node->offset = lvar->offset;
+            locals = lvar;
+        }
         return node;
     }
 
