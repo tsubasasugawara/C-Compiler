@@ -5,6 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* ------------------------------予約後 ------------------------------ */
+#define D_RETURN "return"
+#define D_IF "if"
+#define D_ELSE "else"
+
 /* ------------------------------トークナイザー ------------------------------ */
 
 typedef enum
@@ -15,6 +20,7 @@ typedef enum
     TK_EOF,      // 入力の終わりを表すトークン
     TK_RETURN,   // return
     TK_IF,       // if
+    TK_ELSE,     // else
     // TK_WHILE,    // while
     // TK_FOR,      // for
 } TokenKind;
@@ -84,6 +90,7 @@ typedef enum
     ND_NUM,    // 整数
     ND_RETURN, // return
     ND_IF,     // if
+    ND_ELSE,   // else
 } NodeKind;
 
 typedef struct Node Node;
@@ -97,6 +104,7 @@ struct Node
     Node *rhs;       // 右辺
     Node *condition; // ifの条件式
     Node *then;      // ifの制御文
+    Node *els;       // elseの制御文
     int val;         // kindがND_NUMの場合のみ使う
     int offset;      // kindがND_LVARの場合のみ使う
 };

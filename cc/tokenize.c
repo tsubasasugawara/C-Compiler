@@ -134,17 +134,27 @@ Token *tokenize()
             continue;
         }
 
-        if (is_reserved_keyword(p, "return"))
+        if (is_reserved_keyword(p, D_RETURN))
         {
-            cur = new_token(TK_RETURN, cur, p, 6);
-            p += 6;
+            size_t keylen = strlen(D_RETURN);
+            cur = new_token(TK_RETURN, cur, p, keylen);
+            p += keylen;
             continue;
         }
 
-        if (is_reserved_keyword(p, "if"))
+        if (is_reserved_keyword(p, D_IF))
         {
-            cur = new_token(TK_IF, cur, p, 2);
-            p += 2;
+            size_t keylen = strlen(D_IF);
+            cur = new_token(TK_IF, cur, p, keylen);
+            p += keylen;
+            continue;
+        }
+
+        if (is_reserved_keyword(p, D_ELSE))
+        {
+            size_t keylen = strlen(D_ELSE);
+            cur = new_token(TK_ELSE, cur, p, keylen);
+            p += keylen;
             continue;
         }
 

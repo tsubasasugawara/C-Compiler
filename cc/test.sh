@@ -58,5 +58,9 @@ assert 14 "a = 3;
 b = 5 * 6 - 8;
 return a + b / 2;"
 assert 2 "if (1) 2;"
+assert 10 "if (0) 2; else 10;"
+assert 5 "a = 3;
+b = 3;
+if(a-b) 1; else a + b - 1;"
 
 echo OK

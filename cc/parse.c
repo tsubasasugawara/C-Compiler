@@ -66,14 +66,14 @@ Node *stmt()
 {
     Node *node;
 
-    if (consume("return"))
+    if (consume(D_RETURN))
     {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
         node->lhs = expr();
         expect(";");
     }
-    else if (consume("if"))
+    else if (consume(D_IF))
     {
         node = calloc(1, sizeof(Node));
         node->kind = ND_IF;
@@ -81,6 +81,12 @@ Node *stmt()
         node->condition = expr();
         expect(")");
         node->then = stmt();
+
+        if (consume(D_ELSE))
+        {
+            node->els = expr();
+            expect(";");
+        }
     }
     else
     {
