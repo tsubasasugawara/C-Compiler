@@ -166,6 +166,14 @@ Token *tokenize()
             continue;
         }
 
+        if (is_reserved_keyword(p, D_FOR))
+        {
+            size_t keylen = strlen(D_FOR);
+            cur = new_token(TK_FOR, cur, p, keylen);
+            p += keylen;
+            continue;
+        }
+
         if (isdigit(*p))
         {
             cur = new_token(TK_NUM, cur, p, 0);

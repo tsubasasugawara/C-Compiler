@@ -42,47 +42,68 @@ void gen(Node *node)
         printf("    ret\n");
         return;
     case ND_IF:
+        int if_label = label++;
+
         gen(node->condition);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
 
         if (node->els)
         {
-            int else_label = label;
-            int end_label = label + 1;
-
-            printf("    je .Lelse%03d\n", else_label);
+            printf("    je .Lelse%03d\n", if_label);
             gen(node->then);
-            printf("    jmp .Lend%03d\n", end_label);
-            printf(".Lelse%03d:\n", else_label);
+            printf("    jmp .Lend%03d\n", if_label);
+            printf(".Lelse%03d:\n", if_label);
             gen(node->els);
-            printf(".Lend%03d:\n", end_label);
-
-            label += 2;
+            printf(".Lend%03d:\n", if_label);
         }
         else
         {
-            printf("    je .Lend%03d\n", label);
+            printf("    je .Lend%03d\n", if_label);
             gen(node->then);
-            printf(".Lend%03d:\n", label);
-
-            label += 1;
+            printf(".Lend%03d:\n", if_label);
         }
         return;
     case ND_WHILE:
-        int begin_label = label;
-        int end_label = label + 1;
+        int while_label = label++;
 
-        printf("Lbegin%03d:\n", begin_label);
+        printf(".Lbegin%03d:\n", while_label);
         gen(node->condition);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
-        printf("    je .Lend%03d\n", end_label);
+        printf("    je .Lend%03d\n", while_label);
         gen(node->body);
-        printf("    jmp .Lbegin%03d\n", begin_label);
-        printf(".Lend%03d\n", end_label);
+        printf("    jmp .Lbegin%03d\n", while_label);
+        printf(".Lend%03d:\n", while_label);
 
-        label += 2;
+        return;
+    case ND_FOR:
+        int for_label = label++;
+
+        if (node->init)
+        {
+            gen(node->init);
+        }
+        printf(".Lbegin%03d:\n", for_label);
+        if (node->condition)
+        {
+            gen(node->condition);
+        }
+        else
+        {
+            printf("    push 0\n");
+        }
+        printf("    pop rax\n");
+        printf("    cmp rax, 0\n");
+        printf("    je .Lend%03d\n", for_label);
+        gen(node->body);
+        if (node->update)
+        {
+            gen(node->update);
+        }
+        printf("   jmp .Lbegin%03d\n", for_label);
+        printf(".Lend%03d:\n", for_label);
+
         return;
     }
 

@@ -73,6 +73,28 @@ Node *stmt()
         node->lhs = expr();
         expect(";");
     }
+    else if (consume(D_FOR))
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_FOR;
+        expect("(");
+        if (!consume(";"))
+        {
+            node->init = expr();
+            expect(";");
+        }
+        if (!consume(";"))
+        {
+            node->condition = expr();
+            expect(";");
+        }
+        if (!consume(")"))
+        {
+            node->update = expr();
+            expect(")");
+        }
+        node->body = stmt();
+    }
     else if (consume(D_WHILE))
     {
         node = calloc(1, sizeof(Node));

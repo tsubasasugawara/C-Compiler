@@ -10,6 +10,7 @@
 #define D_IF "if"
 #define D_ELSE "else"
 #define D_WHILE "while"
+#define D_FOR "for"
 
 /* ------------------------------トークナイザー ------------------------------ */
 
@@ -23,7 +24,7 @@ typedef enum
     TK_IF,       // if
     TK_ELSE,     // else
     TK_WHILE,    // while
-    // TK_FOR,      // for
+    TK_FOR,      // for
 } TokenKind;
 
 typedef struct Token Token;
@@ -92,6 +93,7 @@ typedef enum
     ND_RETURN, // return
     ND_IF,     // if
     ND_WHILE,  // while
+    ND_FOR,    // for
 } NodeKind;
 
 typedef struct Node Node;
@@ -106,10 +108,13 @@ struct Node
 
     // "if(" condition ")" then "else" els
     // "while (" condition ")" body
+    // "for (" init ";" condition ";" update ";)" body
     Node *condition;
     Node *then;
     Node *els;
     Node *body;
+    Node *init;
+    Node *update;
 
     int val;    // kindがND_NUMの場合のみ使う
     int offset; // kindがND_LVARの場合のみ使う
