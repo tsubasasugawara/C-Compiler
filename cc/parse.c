@@ -115,8 +115,8 @@ Node *stmt()
 
         if (consume(D_ELSE))
         {
-            node->els = expr();
-            expect(";");
+            node->els = stmt();
+            consume(";");
         }
     }
     else if (consume("{"))
