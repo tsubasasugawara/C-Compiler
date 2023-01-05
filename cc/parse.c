@@ -119,6 +119,19 @@ Node *stmt()
             expect(";");
         }
     }
+    else if (consume("{"))
+    {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        Vector *stmts = new_vec();
+
+        while (!consume("}"))
+        {
+            vec_push(stmts, stmt());
+        }
+
+        node->stmts = stmts;
+    }
     else
     {
         node = expr();

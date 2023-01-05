@@ -71,5 +71,16 @@ assert 13 "a = 10; b = 0; for (; b < 3; b = b + 1) a = a + 1; a;"
 assert 10 "a = 10; for (b = 0;; b = b + 1) a = a + 1; a;"
 assert 3 "for (b = 0; b < 3;) b = b + 1; b;"
 assert 1 "a = 1; for (;;) a = a + 1; a;"
+assert 1 "a = 1; for (;;) return 1; return 1;"
+assert 3 "{a = 1; for(; a < 3;) a = a + 1; return a;}"
+assert 4 "if (1) {
+    a = 1;
+    a = a + 3;
+    return a;
+} else {
+    b = 2;
+    return b;
+}
+return 5;"
 
 echo OK

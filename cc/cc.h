@@ -76,6 +76,17 @@ Token *tokenize();
 
 /* ------------------------------ パーサー ------------------------------ */
 
+typedef struct
+{
+    void **data;
+    int capacity;
+    int len;
+} Vector;
+
+Vector *new_vec();
+void vec_push(Vector *v, void *elem);
+void *vec_pop(Vector *v);
+
 // 抽象構文木のノードの種類
 typedef enum
 {
@@ -94,6 +105,7 @@ typedef enum
     ND_IF,     // if
     ND_WHILE,  // while
     ND_FOR,    // for
+    ND_BLOCK,  // {}の中
 } NodeKind;
 
 typedef struct Node Node;
@@ -115,6 +127,7 @@ struct Node
     Node *body;
     Node *init;
     Node *update;
+    Vector *stmts;
 
     int val;    // kindがND_NUMの場合のみ使う
     int offset; // kindがND_LVARの場合のみ使う
