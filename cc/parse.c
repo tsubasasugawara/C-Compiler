@@ -31,6 +31,7 @@ Node *new_node_num(int val)
 /*
 program     = stmt*
 stmt        = expr ";" |
+              "{" stmt* "}" |
               "if" "(" expr ")" stmt ( "else" stmt)? |
               "while" "(" expr ")" stmt |
               for" "(" expr? ")" ";" expr? ";" ";" expr? ")" stmt |
@@ -42,7 +43,9 @@ relational  = add ("<" add | "<=" add | ">" add | ">=" add)*
 add         = mul ("+" mul | "-" mul)*
 mul         = unary ("*" unary | "/" unary)*
 unary       = ("+" ~ "-")? primay
-primary     = num | ident | "(" expr ")"
+primary     = num |
+              ident ("(" ")")?|
+              "(" expr ")"
 */
 Node *stmt();
 Node *expr();
@@ -240,6 +243,15 @@ Node *primary()
     Token *tok = consume_ident();
     if (tok)
     {
+        if (consume("(") && consume(")"))
+        {
+            Node *node = calloc(1, sizeof(Node));
+            node->kind = ND_CALL;
+            node->name = strndup(tok->str, tok->len);
+
+            return node;
+        }
+
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_LVAR;
 

@@ -4,9 +4,26 @@ assert() {
     input="$2"
 
     ./cc "$input" > tmp.s
-    cc -o tmp tmp.s
+    cc -o tmp tmp.s ./test/foo.c
     ./tmp
     actual="$?"
+
+    if [ "$actual" = "$expected" ]; then
+        echo "$input => $actual"
+    else
+        echo "$input => $expected expected, but got $actual"
+        exit 1
+    fi
+}
+
+assert_output() {
+    expected="$1"
+    input="$2"
+
+    ./cc "$input" > tmp.s
+    cc -o tmp tmp.s ./test/foo.c
+    ./tmp
+    actual=$(./tmp)
 
     if [ "$actual" = "$expected" ]; then
         echo "$input => $actual"
@@ -104,5 +121,7 @@ while(b < 5) {
 }
 return b;
 "
+assert_output OK "a();"
+assert 5 "b(); return 5;"
 
 echo OK

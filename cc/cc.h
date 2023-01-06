@@ -106,6 +106,7 @@ typedef enum
     ND_WHILE,  // while
     ND_FOR,    // for
     ND_BLOCK,  // {}‚Ì’†
+    ND_CALL,   // ŠÖ”
 } NodeKind;
 
 typedef struct Node Node;
@@ -131,6 +132,7 @@ struct Node
 
     int val;    // kind‚ªND_NUM‚Ìê‡‚Ì‚İg‚¤
     int offset; // kind‚ªND_LVAR‚Ìê‡‚Ì‚İg‚¤
+    char *name; // kind‚ªND_CALL‚Ìê‡‚Ì‚İg‚¤
 };
 
 typedef struct LVar LVar;

@@ -112,6 +112,10 @@ void gen(Node *node)
             printf("    pop rax\n");
         }
         return;
+    case ND_CALL:
+        printf("    call %s\n", node->name);
+        printf("    push rax\n");
+        return;
     }
 
     gen(node->lhs);
