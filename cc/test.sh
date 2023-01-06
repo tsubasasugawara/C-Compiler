@@ -122,6 +122,7 @@ while(b < 5) {
 return b;
 "
 assert_output OK "a();"
-assert 5 "b(); return 5;"
+assert 45 "return b() + 5;"
+assert 5 "return c(2, 3);"
 
 echo OK

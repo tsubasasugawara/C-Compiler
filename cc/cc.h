@@ -129,6 +129,7 @@ struct Node
     Node *init;
     Node *update;
     Vector *stmts;
+    Vector *args;
 
     int val;    // kind‚ªND_NUM‚Ìê‡‚Ì‚İg‚¤
     int offset; // kind‚ªND_LVAR‚Ìê‡‚Ì‚İg‚¤

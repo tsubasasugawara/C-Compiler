@@ -243,11 +243,23 @@ Node *primary()
     Token *tok = consume_ident();
     if (tok)
     {
-        if (consume("(") && consume(")"))
+        if (consume("("))
         {
             Node *node = calloc(1, sizeof(Node));
             node->kind = ND_CALL;
             node->name = strndup(tok->str, tok->len);
+            node->args = new_vec();
+
+            while (!consume(")"))
+            {
+                consume(",");
+                Node *arg = expr();
+                vec_push(node->args, arg);
+                if (node->args->len > 6)
+                {
+                    error_at(token->str, "Only up to six function arguments are supported.");
+                }
+            }
 
             return node;
         }
