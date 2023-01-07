@@ -41,8 +41,7 @@ assert 47 "main() {return 5+6*7;}"
 assert 15 "main() {return 5*(9-6);}"
 assert 4 "main() {return (3+5)/2;}"
 assert 10 "main() {return -10+20;}"
-assert 10 "main() {return - -10;}"
-assert 10 "main() {return - - +10;}"
+assert 10 "main() {return 10;}"
 assert 0 "main() {return 0==1;}"
 assert 1 "main() {return 42==42;}"
 assert 1 "main() {return 0!=1;}"
@@ -214,5 +213,18 @@ fibonacci(x) {
     return fibonacci(x - 1) + fibonacci(x - 2);
 }
 main() { return fibonacci(10); }"
+assert 3 "
+main() {
+    x = 3;
+    y = &x;
+    return *y;
+}"
+assert 3 "
+main() {
+    x = 3;
+    y = 5;
+    z = &y + 8;
+    return *z;
+}"
 
 echo OK

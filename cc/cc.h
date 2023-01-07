@@ -96,6 +96,8 @@ typedef enum
     ND_SUB,    // -
     ND_MUL,    // *
     ND_DIV,    // /
+    ND_ADDR,   // íPçÄ&
+    ND_DEREF,  // íPçÄ*
     ND_ASSIGN, // =
     ND_EQ,     // ==
     ND_NE,     // !=
