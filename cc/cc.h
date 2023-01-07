@@ -11,6 +11,7 @@
 #define D_ELSE "else"
 #define D_WHILE "while"
 #define D_FOR "for"
+#define D_INT "int"
 
 /* ------------------------------トークナイザー ------------------------------ */
 
@@ -25,6 +26,7 @@ typedef enum
     TK_ELSE,     // else
     TK_WHILE,    // while
     TK_FOR,      // for
+    TK_INT,      // int型
 } TokenKind;
 
 typedef struct Token Token;

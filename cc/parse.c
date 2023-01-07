@@ -53,6 +53,7 @@ Program *parse()
 
     while (!at_eof())
     {
+        expect(D_INT);
         Token *tok = consume_ident();
         if (!tok)
             error_at(tok->str, "A top-level function definition is required.");
@@ -75,6 +76,7 @@ Program *parse()
         expect("(");
         while (!consume(")"))
         {
+            expect(D_INT);
             Token *param_tok = consume_ident();
             if (!param_tok || param_tok->kind != TK_IDENT)
                 error_at(param_tok->str, "Arguments required.");
@@ -94,7 +96,6 @@ Program *parse()
             param_node = calloc(1, sizeof(Node));
             param_node->kind = ND_LVAR;
             param_node->offset = (params->len + 1) * 8;
-            // TODO: パラメータをローカル変数とする
             vec_push(params, param_node);
             consume(",");
         }
@@ -325,13 +326,31 @@ Node *primary()
         }
         else
         {
-            lvar = calloc(1, sizeof(LVar));
-            lvar->name = tok->str;
-            lvar->len = tok->len;
-            lvar->offset = (lvars->len + 1) * 8;
-            node->offset = lvar->offset;
-            vec_push(lvars, lvar);
+            error_at(tok->str, "The variable is not defined.");
         }
+        return node;
+    }
+
+    if (consume(D_INT))
+    {
+        Token *variable_tok = consume_ident();
+        if (!variable_tok)
+            error_at(variable_tok->str, "Expected itentifier.");
+
+        Node *node;
+        LVar *lvar;
+
+        node = calloc(1, sizeof(Node));
+        lvar = calloc(1, sizeof(LVar));
+
+        lvar->name = variable_tok->str;
+        lvar->len = variable_tok->len;
+        lvar->offset = (lvars->len + 1) * 8;
+        vec_push(lvars, lvar);
+
+        node->offset = lvar->offset;
+        node->kind = ND_LVAR;
+
         return node;
     }
 

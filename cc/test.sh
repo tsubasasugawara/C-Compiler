@@ -33,197 +33,305 @@ assert_output() {
     fi
 }
 
-assert 0 "main() {return 0;}"
-assert 42 "main() {return 42;}"
-assert 21 "main() {return 5+20-4;}"
-assert 41 "main() {return 12  + 34 - 5 ;}"
-assert 47 "main() {return 5+6*7;}"
-assert 15 "main() {return 5*(9-6);}"
-assert 4 "main() {return (3+5)/2;}"
-assert 10 "main() {return -10+20;}"
-assert 10 "main() {return 10;}"
-assert 0 "main() {return 0==1;}"
-assert 1 "main() {return 42==42;}"
-assert 1 "main() {return 0!=1;}"
-assert 0 "main() {return 42!=42;}"
-assert 1 "main() {return 0<1;}"
-assert 0 "main() {return 1<1;}"
-assert 0 "main() {return 2<1;}"
-assert 1 "main() {return 0<=1;}"
-assert 1 "main() {return 1<=1;}"
-assert 0 "main() {return 2<=1;}"
-assert 1 "main() {return 1>0;}"
-assert 0 "main() {return 1>1;}"
-assert 0 "main() {return 1>2;}"
-assert 1 "main() {return 1>=0;}"
-assert 1 "main() {return 1>=1;}"
-assert 0 "main() {return 1>=2;}"
-assert 52 "main() {
-a = 52;
-return a;
+assert 0 "
+int main() {
+    return 0;
 }"
-assert 1 "main() {
-a = 1;
-return a;
+assert 42 "
+int main() {
+    return 42;
 }"
-assert 14 "main() {
-a = 3;
-b = 5 * 6 - 8;
-return a + b / 2;
+assert 21 "
+int main() {
+    return 5+20-4;
 }"
-assert 6 "main() {
-foo = 1;
-bar = 2 + 3;
-return foo + bar;
+assert 41 "
+int main() {
+    return 12  + 34 - 5 ;
 }"
-assert 5 "main() {return 5;}"
-assert 8 "main() {return 8;}"
-assert 2 "main() {
-if (1) return 2;
+assert 47 "
+int main() {
+    return 5+6*7;
 }"
-assert 10 "main() {
-if (0) return 2;
-else return 10;
+assert 15 "
+int main() {
+    return 5*(9-6);
 }"
-assert 5 "main() {
-a = 3;
-b = 3;
-if(a-b) return 1; else return a + b - 1;
+assert 4 "
+int main() {
+    return (3+5)/2;
 }"
-assert 5 "main() {
-a = 1;
-while (a!=5) a = a + 1;
-return a;
+assert 10 "
+int main() {
+    return -10+20;
 }"
-assert 13 "main() {
-a = 10;
-for (b = 0; b < 3; b = b + 1) a = a + 1;
-return a;
+assert 10 "
+int main() {
+    return 10;
 }"
-assert 11 "main() {
-a = 10;
-for (b = 0; b < 3; b = b + 1) if (a == 11) return a; else a = a + 1;
-return a;
+assert 0 "
+int main() {
+    return 0==1;
 }"
-assert 13 "main() {
-a = 10;
-b = 0;
-for (; b < 3; b = b + 1) a = a + 1;
-return a;
+assert 1 "
+int main() {
+    return 42==42;
 }"
-assert 10 "main() {
-a = 10;
-for (b = 0;; b = b + 1) a = a + 1;
-return a;
+assert 1 "
+int main() {
+    return 0!=1;
 }"
-assert 3 "main() {
-for (b = 0; b < 3;) b = b + 1;
-return b;
+assert 0 "
+int main() {
+    return 42!=42;
 }"
-assert 1 "main() {
-a = 1;
-for (;;) a = a + 1;
-a;
+assert 1 "
+int main() {
+    return 0<1;
 }"
-assert 1 "main() {
-a = 1;
-for (;;) return 2;
-return 1;
+assert 0 "
+int main() {
+    return 1<1;
 }"
-assert 3 "main() {
-a = 1;
-for(; a < 3;) a = a + 1;
-return a;
+assert 0 "
+int main() {
+    return 2<1;
 }"
-assert 4 "main() {
-if (1) {
-    a = 1;
-    a = a + 3;
+assert 1 "
+int main() {
+    return 0<=1;
+}"
+assert 1 "
+int main() {
+    return 1<=1;
+}"
+assert 0 "
+int main() {
+    return 2<=1;
+}"
+assert 1 "
+int main() {
+    return 1>0;
+}"
+assert 0 "
+int main() {
+    return 1>1;
+}"
+assert 0 "
+int main() {
+    return 1>2;
+}"
+assert 1 "
+int main() {
+    return 1>=0;
+}"
+assert 1 "
+int main() {
+    return 1>=1;
+}"
+assert 0 "
+int main() {
+    return 1>=2;
+}"
+assert 52 "
+int main() {
+    int a = 52;
     return a;
-} else {
-    b = 2;
-    return b;
-}
-return 5;
 }"
-assert 5 "main() {
-b = 1;
-for (a = 1; a < 5; a = a + 1) {
-    b = b + 1;
-}
-return b;
+assert 1 "
+int main() {
+    int a = 1;
+    return a;
 }"
-assert 3 "main() {
-b = 1;
-for (a = 1; a < 5; a = a + 1) {
-    b = b + 1;
-    return 3;
-}
-return b;
+assert 14 "
+int main() {
+    int a = 3;
+    int b = 5 * 6 - 8;
+    return a + b / 2;
 }"
-assert 5 "main() {
-b = 1;
-while(b < 5) {
-    b = b + 1;
-}
-return b;
-}"
-assert_output OK "main() {
-return a();
-}"
-assert 45 "main() {
-return b() + 5;
-}"
-assert 5 "main() {
-return c(2, 3);
+assert 6 "
+int main() {
+    int foo = 1;
+    int bar = 2 + 3;
+    return foo + bar;
 }"
 assert 5 "
-add() {
+int main() {
+    return 5;
+}"
+assert 8 "
+int main() {
+    return 8;
+}"
+assert 2 "
+int main() {
+    if (1) return 2;
+}"
+assert 10 "
+int main() {
+    if (0) return 2;
+    else return 10;
+}"
+assert 5 "
+int main() {
+    int a = 3;
+    int b = 3;
+    if(a-b) return 1; else return a + b - 1;
+}"
+assert 5 "
+int main() {
+    int a = 1;
+    while (a!=5) a = a + 1;
+    return a;
+}"
+assert 13 "
+int main() {
+    int a = 10;
+    for (int b = 0; b < 3; b = b + 1) a = a + 1;
+    return a;
+}"
+assert 11 "
+int main() {
+    int a = 10;
+    for (int b = 0; b < 3; b = b + 1) if (a == 11) return a; else a = a + 1;
+    return a;
+}"
+assert 13 "
+int main() {
+    int a = 10;
+    int b = 0;
+    for (; b < 3; b = b + 1) a = a + 1;
+    return a;
+}"
+assert 10 "
+int main() {
+    int a = 10;
+    for (int b = 0;; b = b + 1) a = a + 1;
+    return a;
+}"
+assert 3 "
+int main() {
+    for (int b = 0; b < 3;) b = b + 1;
+    return b;
+}"
+assert 1 "
+int main() {
+    int a = 1;
+    for (;;) a = a + 1;
+    return a;
+}"
+assert 1 "
+int main() {
+    int a = 1;
+    for (;;) return 2;
+    return 1;
+}"
+assert 3 "
+int main() {
+    int a = 1;
+    for(; a < 3;) a = a + 1;
+    return a;
+}"
+assert 4 "
+int main() {
+    if (1) {
+        int a = 1;
+        a = a + 3;
+        return a;
+    } else {
+        int b = 2;
+        return b;
+    }
+    return 5;
+}"
+assert 5 "
+int main() {
+    int b = 1;
+    for (int a = 1; a < 5; a = a + 1) {
+        b = b + 1;
+    }
+    return b;
+}"
+assert 3 "
+int main() {
+    int b = 1;
+    for (int a = 1; a < 5; a = a + 1) {
+        b = b + 1;
+        return 3;
+    }
+    return b;
+}"
+assert 5 "
+int main() {
+    int b = 1;
+    while(b < 5) {
+        b = b + 1;
+    }
+    return b;
+}"
+assert_output OK "
+int main() {
+    return a();
+}"
+assert 45 "
+int main() {
+    return b() + 5;
+}"
+assert 5 "
+int main() {
+    return c(2, 3);
+}"
+assert 5 "
+int add() {
     return 2 + 2;
 }
 
-main() {
+int main() {
     return add() + 1;
 }
 "
 assert 5 "
-add(x, y) {return x + y;}
+int add(int x, int y) {
+    return x + y;}
 
-main() {return add(2, 3);}
+int main() {
+    return add(2, 3);}
 "
 assert 10 "
-add(x, y) {
-    a = 5;
+int add(int x, int y) {
+    int a = 5;
     return a + x + y;
 }
 
-main() {return add(2, 3);}
+int main() {
+    return add(2, 3);}
 "
 assert 10 "
-add(x, y) {
-    a = c(x, y);
+int add(int x, int y) {
+    int a = c(x, y);
     return a + x + y;
 }
 
-main() {return add(2, 3);}
+int main() {
+    return add(2, 3);}
 "
 assert 55 "
-fibonacci(x) {
+int fibonacci(int x) {
     if (x < 2) return x;
     return fibonacci(x - 1) + fibonacci(x - 2);
 }
-main() { return fibonacci(10); }"
+int main() { return fibonacci(10); }"
 assert 3 "
-main() {
-    x = 3;
-    y = &x;
+int main() {
+    int x = 3;
+    int y = &x;
     return *y;
 }"
 assert 3 "
-main() {
-    x = 3;
-    y = 5;
-    z = &y + 8;
+int main() {
+    int x = 3;
+    int y = 5;
+    int z = &y + 8;
     return *z;
 }"
 

@@ -47,6 +47,12 @@ Token *consume_ident()
 
 void expect(char *op)
 {
+    if (token->kind == TK_INT && memcmp(op, D_INT, sizeof(D_INT)) == 0)
+    {
+        token = token->next;
+        return;
+    }
+
     if (token->kind != TK_RESERVED ||
         strlen(op) != token->len ||
         memcmp(token->str, op, token->len))
@@ -170,6 +176,14 @@ Token *tokenize()
         {
             size_t keylen = strlen(D_FOR);
             cur = new_token(TK_FOR, cur, p, keylen);
+            p += keylen;
+            continue;
+        }
+
+        if (is_reserved_keyword(p, D_INT))
+        {
+            size_t keylen = strlen(D_INT);
+            cur = new_token(TK_INT, cur, p, keylen);
             p += keylen;
             continue;
         }
