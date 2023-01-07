@@ -107,10 +107,7 @@ void gen(Node *node)
         return;
     case ND_BLOCK:
         for (int i = 0; i < node->stmts->len; i++)
-        {
             gen(node->stmts->data[i]);
-            printf("    pop rax\n");
-        }
         return;
     case ND_CALL:
         for (int i = 0; i < node->args->len; i++)
@@ -202,4 +199,40 @@ void gen(Node *node)
     }
 
     printf("    push rax\n");
+    return;
+}
+
+void gen_func(Function *func)
+{
+    // 関数定義のプロローグ
+    printf(".globl %s\n", func->name);
+    printf("%s:\n", func->name);
+
+    // 変数のスペースを確保
+    printf("    push rbp\n");
+    printf("    mov rbp, rsp\n");
+    printf("    sub rsp, %d\n", func->lvars->len * 8);
+
+    gen(func->node->body);
+
+    // Epilogue
+    // 最後の式の結果はraxにあり、返り値となる
+    printf("    mov rsp, rbp\n");
+    printf("    pop rbp\n");
+    printf("    ret\n");
+    return;
+}
+
+void codegen()
+{
+    // アセンブリの前半部分を出力
+    printf(".intel_syntax noprefix\n");
+
+    // 先頭の式から順にコード生成
+    for (int i = 0; i < program->funcs->len; i++)
+    {
+        gen_func(program->funcs->data[i]);
+    }
+
+    return;
 }

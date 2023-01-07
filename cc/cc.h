@@ -76,12 +76,14 @@ Token *tokenize();
 
 /* ------------------------------ パーサー ------------------------------ */
 
-typedef struct
+typedef struct Vector Vector;
+
+struct Vector
 {
     void **data;
     int capacity;
     int len;
-} Vector;
+};
 
 Vector *new_vec();
 void vec_push(Vector *v, void *elem);
@@ -106,7 +108,8 @@ typedef enum
     ND_WHILE,  // while
     ND_FOR,    // for
     ND_BLOCK,  // {}の中
-    ND_CALL,   // 関数
+    ND_CALL,   // 関数呼び出し
+    ND_FUNC,   // 関数定義
 } NodeKind;
 
 typedef struct Node Node;
@@ -128,8 +131,9 @@ struct Node
     Node *body;
     Node *init;
     Node *update;
-    Vector *stmts;
-    Vector *args;
+    Vector *stmts;  // ブロックの中
+    Vector *args;   // 引数
+    Vector *params; // 関数のパラメタ
 
     int val;    // kindがND_NUMの場合のみ使う
     int offset; // kindがND_LVARの場合のみ使う
@@ -141,21 +145,36 @@ typedef struct LVar LVar;
 // ローカル変数の型
 struct LVar
 {
-    LVar *next; // 次の変数かNULL
     char *name; // 変数の名前
     int len;    // 名前の長さ
     int offset; // RBPからのオフセット
 };
 
-void program();
+typedef struct Function Function;
+
+struct Function
+{
+    char *name;
+    Node *node;
+    Vector *lvars;
+};
+
+typedef struct Program Program;
+
+struct Program
+{
+    Vector *funcs;
+};
+
+Program *parse();
 
 /* ------------------------------ コードジェネレータ ------------------------------ */
 
-void gen(Node *node);
+void codegen();
 
 /* ------------------------------ グローバル変数 ------------------------------ */
 // 現在着目しているトークン
 extern Token *token;
 // 入力プログラム
 extern char *user_input;
-extern Node *code[100];
+extern Program *program;

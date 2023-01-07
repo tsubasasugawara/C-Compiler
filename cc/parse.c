@@ -1,13 +1,19 @@
 #include "./cc.h"
 
+#define D_MAIN "main"
+
 // ローカル変数
-LVar *locals;
+Vector *lvars;
 
 LVar *find_lvar(Token *tok)
 {
-    for (LVar *var = locals; var; var = var->next)
+    for (int i = 0; i < lvars->len; i++)
+    {
+        LVar *var;
+        var = lvars->data[i];
         if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
             return var;
+    }
     return NULL;
 }
 
@@ -28,25 +34,7 @@ Node *new_node_num(int val)
     return node;
 }
 
-/*
-program     = stmt*
-stmt        = expr ";" |
-              "{" stmt* "}" |
-              "if" "(" expr ")" stmt ( "else" stmt)? |
-              "while" "(" expr ")" stmt |
-              for" "(" expr? ")" ";" expr? ";" ";" expr? ")" stmt |
-              "return" expr ";"
-expr        = assign
-assign      = equality ("=" assign)?
-equality    = relational ("==" relational | "!=" relational)*
-relational  = add ("<" add | "<=" add | ">" add | ">=" add)*
-add         = mul ("+" mul | "-" mul)*
-mul         = unary ("*" unary | "/" unary)*
-unary       = ("+" ~ "-")? primay
-primary     = num |
-              ident ("(" ")")?|
-              "(" expr ")"
-*/
+Program *parse();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -57,12 +45,56 @@ Node *mul();
 Node *unary();
 Node *primary();
 
-void program()
+Program *parse()
 {
-    int i = 0;
+    Program *program;
+    program = calloc(1, sizeof(Program));
+    Vector *funcs = new_vec();
+
     while (!at_eof())
-        code[i++] = stmt();
-    code[i] = NULL;
+    {
+        Node *node;
+        Vector *params;
+        Function *func;
+
+        node = calloc(1, sizeof(Node));
+        func = calloc(1, sizeof(Function));
+        lvars = new_vec();
+        params = new_vec();
+
+        node->kind = ND_FUNC;
+
+        Token *tok = consume_ident();
+        if (!tok)
+            error_at(tok->str, "A top-level function definition is required.");
+
+        char *name = strndup(tok->str, tok->len);
+        node->name = name;
+        func->name = name;
+
+        expect("(");
+        while (!consume(")"))
+        {
+            Token *param_tok = consume_ident();
+            if (!param_tok)
+                error_at(param_tok->str, "Arguments required.");
+
+            Node *param_node;
+            param_node = primary();
+            // TODO: パラメータをローカル変数とする
+            vec_push(params, param_node);
+            consume(",");
+        }
+
+        node->body = stmt();
+        node->params = params;
+        func->lvars = lvars;
+        func->node = node;
+        vec_push(funcs, func);
+    }
+
+    program->funcs = funcs;
+    return program;
 }
 
 Node *stmt()
@@ -275,12 +307,11 @@ Node *primary()
         else
         {
             lvar = calloc(1, sizeof(LVar));
-            lvar->next = locals;
             lvar->name = tok->str;
             lvar->len = tok->len;
-            lvar->offset = locals ? locals->offset + 8 : 8;
+            lvar->offset = (lvars->len + 1) * 8;
             node->offset = lvar->offset;
-            locals = lvar;
+            vec_push(lvars, lvar);
         }
         return node;
     }
