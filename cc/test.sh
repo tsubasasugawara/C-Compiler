@@ -187,5 +187,32 @@ main() {
     return add() + 1;
 }
 "
+assert 5 "
+add(x, y) {return x + y;}
+
+main() {return add(2, 3);}
+"
+assert 10 "
+add(x, y) {
+    a = 5;
+    return a + x + y;
+}
+
+main() {return add(2, 3);}
+"
+assert 10 "
+add(x, y) {
+    a = c(x, y);
+    return a + x + y;
+}
+
+main() {return add(2, 3);}
+"
+assert 55 "
+fibonacci(x) {
+    if (x < 2) return x;
+    return fibonacci(x - 1) + fibonacci(x - 2);
+}
+main() { return fibonacci(10); }"
 
 echo OK

@@ -12,6 +12,8 @@ void gen_lval(Node *node)
 
 int label = 0;
 
+char *register_list_for_arguments[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+
 void gen(Node *node)
 {
     switch (node->kind)
@@ -113,40 +115,7 @@ void gen(Node *node)
         for (int i = 0; i < node->args->len; i++)
         {
             gen(node->args->data[i]);
-            char *register_name;
-            switch (i)
-            {
-            case 0:
-            {
-                register_name = "rdi";
-                break;
-            }
-            case 1:
-            {
-                register_name = "rsi";
-                break;
-            }
-            case 2:
-            {
-                register_name = "rdx";
-                break;
-            }
-            case 3:
-            {
-                register_name = "rcx";
-                break;
-            }
-            case 4:
-            {
-                register_name = "r8";
-                break;
-            }
-            case 5:
-            {
-                register_name = "r9";
-                break;
-            }
-            }
+            char *register_name = register_list_for_arguments[i];
             printf("    pop rax\n");
             printf("    mov %s, rax\n", register_name);
         }
@@ -211,7 +180,16 @@ void gen_func(Function *func)
     // 変数のスペースを確保
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d\n", func->lvars->len * 8);
+    printf("    sub rsp, %d\n", (func->lvars->len) * 8);
+
+    for (int i = 0; i < func->node->params->len; i++)
+    {
+        gen_lval(func->node->params->data[i]);
+        char *register_name = strndup(register_list_for_arguments[i], sizeof(register_list_for_arguments[i]));
+        printf("    pop rax\n");
+        printf("    mov [rax], %s\n", register_name);
+        printf("    push rdi\n");
+    }
 
     gen(func->node->body);
 

@@ -178,3 +178,4 @@ extern Token *token;
 // “ü—ÍƒvƒƒOƒ‰ƒ€
 extern char *user_input;
 extern Program *program;
+extern char *register_list_for_arguments[6];

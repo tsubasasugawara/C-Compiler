@@ -53,6 +53,10 @@ Program *parse()
 
     while (!at_eof())
     {
+        Token *tok = consume_ident();
+        if (!tok)
+            error_at(tok->str, "A top-level function definition is required.");
+
         Node *node;
         Vector *params;
         Function *func;
@@ -64,10 +68,6 @@ Program *parse()
 
         node->kind = ND_FUNC;
 
-        Token *tok = consume_ident();
-        if (!tok)
-            error_at(tok->str, "A top-level function definition is required.");
-
         char *name = strndup(tok->str, tok->len);
         node->name = name;
         func->name = name;
@@ -76,11 +76,24 @@ Program *parse()
         while (!consume(")"))
         {
             Token *param_tok = consume_ident();
-            if (!param_tok)
+            if (!param_tok || param_tok->kind != TK_IDENT)
                 error_at(param_tok->str, "Arguments required.");
 
+            size_t param_len = sizeof(register_list_for_arguments) / sizeof(register_list_for_arguments[0]);
+            if (params->len > param_len)
+                error_at(param_tok->str, "Only up to %d function arguments are supported.", param_len);
+
+            LVar *lvar;
+            lvar = calloc(1, sizeof(LVar));
+            lvar->name = param_tok->str;
+            lvar->len = param_tok->len;
+            lvar->offset = (lvars->len + 1) * 8;
+            vec_push(lvars, lvar);
+
             Node *param_node;
-            param_node = primary();
+            param_node = calloc(1, sizeof(Node));
+            param_node->kind = ND_LVAR;
+            param_node->offset = (params->len + 1) * 8;
             // TODO: パラメータをローカル変数とする
             vec_push(params, param_node);
             consume(",");
@@ -287,9 +300,11 @@ Node *primary()
                 consume(",");
                 Node *arg = expr();
                 vec_push(node->args, arg);
-                if (node->args->len > 6)
+
+                size_t arg_len = sizeof(register_list_for_arguments) / sizeof(register_list_for_arguments[0]);
+                if (node->args->len > arg_len)
                 {
-                    error_at(token->str, "Only up to six function arguments are supported.");
+                    error_at(token->str, "Only up to %d function arguments are supported.", arg_len);
                 }
             }
 
