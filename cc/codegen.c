@@ -1,7 +1,15 @@
 #include "./cc.h"
 
+void gen(Node *node);
+
 void gen_lval(Node *node)
 {
+    if (node->kind == ND_DEREF)
+    {
+        gen(node->lhs);
+        return;
+    }
+
     if (node->kind != ND_LVAR)
         error("The left-hand side value of the assignment is not a variable.");
 

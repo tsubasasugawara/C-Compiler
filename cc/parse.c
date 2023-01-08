@@ -1,7 +1,5 @@
 #include "./cc.h"
 
-#define D_MAIN "main"
-
 // ƒ[ƒJƒ‹•Ï”
 Vector *lvars;
 
@@ -32,6 +30,17 @@ Node *new_node_num(int val)
     node->kind = ND_NUM;
     node->val = val;
     return node;
+}
+
+LVar *new_lvar(Token *tok, Type *type)
+{
+    LVar *lvar;
+    lvar = calloc(1, sizeof(LVar));
+    lvar->name = tok->str;
+    lvar->len = tok->len;
+    lvar->offset = (lvars->len + 1) * 8;
+    lvar->type = type;
+    return lvar;
 }
 
 Program *parse();
@@ -333,23 +342,30 @@ Node *primary()
 
     if (consume(D_INT))
     {
+        Type *type = calloc(1, sizeof(Type));
+        type->ty = INT;
+
+        while (consume("*"))
+        {
+            Type *ptr_typ = calloc(1, sizeof(Type));
+            ptr_typ->ty = PTR;
+            ptr_typ->ptr_to = type;
+            type = ptr_typ;
+        }
+
         Token *variable_tok = consume_ident();
         if (!variable_tok)
             error_at(variable_tok->str, "Expected itentifier.");
 
+        LVar *lvar = new_lvar(variable_tok, type);
+
         Node *node;
-        LVar *lvar;
-
         node = calloc(1, sizeof(Node));
-        lvar = calloc(1, sizeof(LVar));
-
-        lvar->name = variable_tok->str;
-        lvar->len = variable_tok->len;
-        lvar->offset = (lvars->len + 1) * 8;
-        vec_push(lvars, lvar);
-
-        node->offset = lvar->offset;
         node->kind = ND_LVAR;
+        node->type = lvar->type;
+        node->offset = lvar->offset;
+
+        vec_push(lvars, lvar);
 
         return node;
     }
