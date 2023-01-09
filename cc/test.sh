@@ -342,5 +342,10 @@ int main() {
     *y = 3;
     return x;
 }"
+assert 3 "
+int main() {
+    int *p = alloc(6, 3);
+    return *(p + 1);
+}"
 
 echo OK

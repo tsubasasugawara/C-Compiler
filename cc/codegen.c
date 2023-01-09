@@ -1,5 +1,17 @@
 #include "./cc.h"
 
+int size_of(Type *type)
+{
+    switch (type->ty)
+    {
+    case INT:
+        return 4;
+    case PTR:
+        return 8;
+    }
+    return 0;
+}
+
 void gen(Node *node);
 
 void gen_lval(Node *node)
@@ -150,9 +162,25 @@ void gen(Node *node)
     switch (node->kind)
     {
     case ND_ADD:
+        if (node->lhs->type->ty == PTR)
+        {
+            printf("    push rax\n");
+            printf("    push %d\n", size_of(node->lhs->type->ptr_to));
+            printf("    pop rax\n");
+            printf("    imul rdi, rax\n");
+            printf("    pop rax\n");
+        }
         printf("    add rax, rdi\n");
         break;
     case ND_SUB:
+        if (node->lhs->type->ty == PTR)
+        {
+            printf("    push rax\n");
+            printf("    push %d\n", size_of(node->lhs->type->ptr_to));
+            printf("    pop rax\n");
+            printf("    imul rdi, rax\n");
+            printf("    pop rax\n");
+        }
         printf("    sub rax, rdi\n");
         break;
     case ND_MUL:

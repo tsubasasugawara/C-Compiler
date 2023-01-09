@@ -3,6 +3,8 @@
 // ƒ[ƒJƒ‹•Ï”
 Vector *lvars;
 
+Type int_ty = {INT, NULL};
+
 LVar *find_lvar(Token *tok)
 {
     for (int i = 0; i < lvars->len; i++)
@@ -29,6 +31,7 @@ Node *new_node_num(int val)
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_NUM;
     node->val = val;
+    node->type = &int_ty;
     return node;
 }
 
@@ -99,12 +102,14 @@ Program *parse()
             lvar->name = param_tok->str;
             lvar->len = param_tok->len;
             lvar->offset = (lvars->len + 1) * 8;
+            lvar->type = &int_ty;
             vec_push(lvars, lvar);
 
             Node *param_node;
             param_node = calloc(1, sizeof(Node));
             param_node->kind = ND_LVAR;
             param_node->offset = (params->len + 1) * 8;
+            param_node->type = &int_ty;
             vec_push(params, param_node);
             consume(",");
         }
@@ -253,11 +258,24 @@ Node *add()
     for (;;)
     {
         if (consume("+"))
+        {
             node = new_node(ND_ADD, node, mul());
+            if (node->rhs->type->ty == PTR)
+            {
+                swap_node(&node->rhs, &node->lhs);
+                assert(node->lhs->type->ty == PTR);
+            }
+            node->type = node->lhs->type;
+        }
         else if (consume("-"))
+        {
             node = new_node(ND_SUB, node, mul());
+            node->type = node->lhs->type;
+        }
         else
+        {
             return node;
+        }
     }
 }
 
@@ -268,9 +286,15 @@ Node *mul()
     for (;;)
     {
         if (consume("*"))
+        {
             node = new_node(ND_MUL, node, unary());
+            node->type = node->lhs->type;
+        }
         else if (consume("/"))
+        {
             node = new_node(ND_DIV, node, unary());
+            node->type = node->lhs->type;
+        }
         else
             return node;
     }
@@ -279,13 +303,27 @@ Node *mul()
 Node *unary()
 {
     if (consume("+"))
+    {
         return primary();
-    if (consume("-"))
-        return new_node(ND_SUB, new_node_num(0), primary());
-    if (consume("&"))
-        return new_node(ND_ADDR, unary(), NULL);
-    if (consume("*"))
-        return new_node(ND_DEREF, unary(), NULL);
+    }
+    else if (consume("-"))
+    {
+        Node *node = new_node(ND_SUB, new_node_num(0), primary());
+        node->type = node->lhs->type;
+        return node;
+    }
+    else if (consume("&"))
+    {
+        Node *node = new_node(ND_ADDR, unary(), NULL);
+        node->type = node->lhs->type;
+        return node;
+    }
+    else if (consume("*"))
+    {
+        Node *node = new_node(ND_DEREF, unary(), NULL);
+        node->type = node->lhs->type;
+        return node;
+    }
     return primary();
 }
 
@@ -308,6 +346,7 @@ Node *primary()
             node->kind = ND_CALL;
             node->name = strndup(tok->str, tok->len);
             node->args = new_vec();
+            node->type = &int_ty;
 
             while (!consume(")"))
             {
@@ -332,6 +371,7 @@ Node *primary()
         if (lvar)
         {
             node->offset = lvar->offset;
+            node->type = lvar->type;
         }
         else
         {

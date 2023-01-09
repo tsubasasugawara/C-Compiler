@@ -1,5 +1,4 @@
 #include "./cc.h"
-#include <assert.h>
 
 Vector *new_vec()
 {

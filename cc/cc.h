@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 /* ------------------------------予約語 ------------------------------ */
 #define D_RETURN "return"
@@ -197,3 +198,6 @@ extern Token *token;
 extern char *user_input;
 extern Program *program;
 extern char *register_list_for_arguments[6];
+
+/* ------------------------------ ユーティリティ ------------------------------ */
+void swap_node(Node **p, Node **q);
