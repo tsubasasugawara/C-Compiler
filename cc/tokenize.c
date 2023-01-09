@@ -188,6 +188,14 @@ Token *tokenize()
             continue;
         }
 
+        if (is_reserved_keyword(p, D_SIZEOF))
+        {
+            size_t keylen = strlen(D_SIZEOF);
+            cur = new_token(TK_SIZEOF, cur, p, keylen);
+            p += keylen;
+            continue;
+        }
+
         if (isdigit(*p))
         {
             cur = new_token(TK_NUM, cur, p, 0);

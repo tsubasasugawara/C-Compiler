@@ -347,5 +347,34 @@ int main() {
     int *p = alloc(6, 3);
     return *(p + 1);
 }"
+assert 4 "
+int main() {
+    int x;
+    return sizeof(x);
+}"
+assert 8 "
+int main() {
+    int *x;
+    return sizeof(x);
+}"
+assert 4 "
+int main() {
+    int x;
+    return sizeof(x + 3);
+}"
+assert 8 "
+int main() {
+    int *x;
+    return sizeof(x + 3);
+}"
+assert 4 "
+int main() {
+    int *x;
+    return sizeof(3);
+}"
+assert 4 "
+int main() {
+    return sizeof(sizeof(1));
+}"
 
 echo OK

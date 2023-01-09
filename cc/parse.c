@@ -324,6 +324,11 @@ Node *unary()
         node->type = node->lhs->type;
         return node;
     }
+    else if (consume(D_SIZEOF))
+    {
+        Node *node = unary();
+        return new_node_num(size_of(node->type));
+    }
     return primary();
 }
 

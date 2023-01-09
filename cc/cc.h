@@ -13,6 +13,7 @@
 #define D_WHILE "while"
 #define D_FOR "for"
 #define D_INT "int"
+#define D_SIZEOF "sizeof"
 
 /* ------------------------------トークナイザー ------------------------------ */
 
@@ -28,6 +29,7 @@ typedef enum
     TK_WHILE,    // while
     TK_FOR,      // for
     TK_INT,      // int型
+    TK_SIZEOF,   // sizeof
 } TokenKind;
 
 typedef struct Token Token;
@@ -201,3 +203,4 @@ extern char *register_list_for_arguments[6];
 
 /* ------------------------------ ユーティリティ ------------------------------ */
 void swap_node(Node **p, Node **q);
+int size_of(Type *type);

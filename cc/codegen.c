@@ -1,17 +1,5 @@
 #include "./cc.h"
 
-int size_of(Type *type)
-{
-    switch (type->ty)
-    {
-    case INT:
-        return 4;
-    case PTR:
-        return 8;
-    }
-    return 0;
-}
-
 void gen(Node *node);
 
 void gen_lval(Node *node)
