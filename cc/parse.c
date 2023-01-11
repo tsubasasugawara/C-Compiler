@@ -389,6 +389,19 @@ Node *primary()
         if (!lvar)
             error_at(tok->str, "The variable is not defined.");
 
+        if (consume("["))
+        {
+            Node *index = expr();
+            Node *array = new_node_lvar(lvar->offset, lvar->type);
+            expect("]");
+
+            Node *array_offset = new_node_binop(ND_ADD, array, index);
+            Node *array_access = new_node(ND_DEREF);
+            array_access->lhs = array_offset;
+            array_access->type = array_offset->lhs->type->ptr_to;
+            return array_access;
+        }
+
         return new_node_lvar(lvar->offset, lvar->type);
     }
 

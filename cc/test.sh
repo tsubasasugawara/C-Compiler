@@ -408,5 +408,12 @@ int main() {
     p = a;
     return *p + *(p + 1);
 }"
+assert 6 "
+int main() {
+    int a[2];
+    a[0] = 1;
+    a[0 + 1] = 5;
+    return a[0] + a[1];
+}"
 
 echo OK
