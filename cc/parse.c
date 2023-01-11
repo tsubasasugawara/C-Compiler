@@ -3,7 +3,14 @@
 // ÉçÅ[ÉJÉãïœêî
 Vector *lvars;
 
-Type int_ty = {INT, NULL, 1};
+Type int_ty = {TY_INT, NULL, 0};
+
+Type *new_type(TypeKind ty)
+{
+    Type *type = calloc(1, sizeof(Type));
+    type->ty = ty;
+    return type;
+}
 
 LVar *find_lvar(Token *tok)
 {
@@ -15,24 +22,6 @@ LVar *find_lvar(Token *tok)
             return var;
     }
     return NULL;
-}
-
-Node *new_node(NodeKind kind, Node *lhs, Node *rhs)
-{
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = kind;
-    node->lhs = lhs;
-    node->rhs = rhs;
-    return node;
-}
-
-Node *new_node_num(int val)
-{
-    Node *node = calloc(1, sizeof(Node));
-    node->kind = ND_NUM;
-    node->val = val;
-    node->type = &int_ty;
-    return node;
 }
 
 LVar *new_lvar(Token *tok, Type *type)
@@ -49,12 +38,61 @@ LVar *new_lvar(Token *tok, Type *type)
         LVar *last = vec_last(lvars);
         prev_offset = last->offset;
     }
-    if (type->ty == ARRAY)
+    if (type->ty == TY_ARRAY)
         lvar->offset = prev_offset + size_of(type);
     else
         lvar->offset = prev_offset + 8;
 
     return lvar;
+}
+
+Function *new_function(char *func_name, Node *node, Vector *lvars)
+{
+    Function *func = calloc(1, sizeof(Function));
+    func->name = func_name;
+    func->node = node;
+    func->lvars = lvars;
+    return func;
+}
+
+Node *new_node(NodeKind kind)
+{
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    return node;
+}
+
+Node *new_node_binop(NodeKind kind, Node *lhs, Node *rhs)
+{
+    Node *node = new_node(kind);
+    node->lhs = lhs;
+    node->rhs = rhs;
+    return node;
+}
+
+Node *new_node_num(int val)
+{
+    Node *node = new_node(ND_NUM);
+    node->val = val;
+    node->type = &int_ty;
+    return node;
+}
+
+Node *new_node_lvar(int offset, Type *type)
+{
+    Node *node = new_node(ND_LVAR);
+    node->offset = offset;
+    node->type = type;
+    return node;
+}
+
+Node *new_node_function(char *func_name, Node *stmt, Vector *params)
+{
+    Node *node = new_node(ND_FUNC);
+    node->name = func_name;
+    node->body = stmt;
+    node->params = params;
+    return node;
 }
 
 Program *parse();
@@ -70,9 +108,8 @@ Node *primary();
 
 Program *parse()
 {
-    Program *program;
-    program = calloc(1, sizeof(Program));
-    Vector *funcs = new_vec();
+    Program *program = calloc(1, sizeof(Program));
+    program->funcs = new_vec();
 
     while (!at_eof())
     {
@@ -81,58 +118,32 @@ Program *parse()
         if (!tok)
             error_at(tok->str, "A top-level function definition is required.");
 
-        Node *node;
-        Vector *params;
-        Function *func;
-
-        node = calloc(1, sizeof(Node));
-        func = calloc(1, sizeof(Function));
+        Vector *params = new_vec();
         lvars = new_vec();
-        params = new_vec();
-
-        node->kind = ND_FUNC;
-
-        char *name = strndup(tok->str, tok->len);
-        node->name = name;
-        func->name = name;
 
         expect("(");
         while (!consume(")"))
         {
             expect(D_INT);
+
             Token *param_tok = consume_ident();
             if (!param_tok || param_tok->kind != TK_IDENT)
                 error_at(param_tok->str, "Arguments required.");
 
-            size_t param_len = sizeof(register_list_for_arguments) / sizeof(register_list_for_arguments[0]);
-            if (params->len > param_len)
-                error_at(param_tok->str, "Only up to %d function arguments are supported.", param_len);
+            size_t args_len = get_register_list_length();
+            if (params->len > args_len)
+                error_at(param_tok->str, "Only up to %d function arguments are supported.", args_len);
 
-            LVar *lvar;
-            lvar = calloc(1, sizeof(LVar));
-            lvar->name = param_tok->str;
-            lvar->len = param_tok->len;
-            lvar->offset = (lvars->len + 1) * 8;
-            lvar->type = &int_ty;
-            vec_push(lvars, lvar);
-
-            Node *param_node;
-            param_node = calloc(1, sizeof(Node));
-            param_node->kind = ND_LVAR;
-            param_node->offset = (params->len + 1) * 8;
-            param_node->type = &int_ty;
-            vec_push(params, param_node);
+            vec_push(lvars, new_lvar(param_tok, &int_ty));
+            vec_push(params, new_node_lvar((params->len + 1) * 8, &int_ty));
             consume(",");
         }
 
-        node->body = stmt();
-        node->params = params;
-        func->lvars = lvars;
-        func->node = node;
-        vec_push(funcs, func);
+        char *func_name = strndup(tok->str, tok->len);
+        Node *node = new_node_function(func_name, stmt(), params);
+        vec_push(program->funcs, new_function(node->name, node, lvars));
     }
 
-    program->funcs = funcs;
     return program;
 }
 
@@ -142,15 +153,13 @@ Node *stmt()
 
     if (consume(D_RETURN))
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_RETURN;
+        node = new_node(ND_RETURN);
         node->lhs = expr();
         expect(";");
     }
     else if (consume(D_FOR))
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_FOR;
+        node = new_node(ND_FOR);
         expect("(");
         if (!consume(";"))
         {
@@ -171,8 +180,7 @@ Node *stmt()
     }
     else if (consume(D_WHILE))
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_WHILE;
+        node = new_node(ND_WHILE);
         expect("(");
         node->condition = expr();
         expect(")");
@@ -180,8 +188,7 @@ Node *stmt()
     }
     else if (consume(D_IF))
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_IF;
+        node = new_node(ND_IF);
         expect("(");
         node->condition = expr();
         expect(")");
@@ -195,8 +202,7 @@ Node *stmt()
     }
     else if (consume("{"))
     {
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_BLOCK;
+        node = new_node(ND_BLOCK);
         Vector *stmts = new_vec();
 
         while (!consume("}"))
@@ -224,7 +230,7 @@ Node *assign()
 {
     Node *node = equality();
     if (consume("="))
-        node = new_node(ND_ASSIGN, node, assign());
+        node = new_node_binop(ND_ASSIGN, node, assign());
     return node;
 }
 
@@ -235,9 +241,9 @@ Node *equality()
     for (;;)
     {
         if (consume("=="))
-            node = new_node(ND_EQ, node, relational());
+            node = new_node_binop(ND_EQ, node, relational());
         else if (consume("!="))
-            node = new_node(ND_NE, node, relational());
+            node = new_node_binop(ND_NE, node, relational());
         else
             return node;
     }
@@ -250,13 +256,13 @@ Node *relational()
     for (;;)
     {
         if (consume("<"))
-            node = new_node(ND_LT, node, add());
+            node = new_node_binop(ND_LT, node, add());
         else if (consume("<="))
-            node = new_node(ND_LE, node, add());
+            node = new_node_binop(ND_LE, node, add());
         else if (consume(">"))
-            node = new_node(ND_LT, add(), node);
+            node = new_node_binop(ND_LT, add(), node);
         else if (consume(">="))
-            node = new_node(ND_LE, add(), node);
+            node = new_node_binop(ND_LE, add(), node);
         else
             return node;
     }
@@ -270,17 +276,17 @@ Node *add()
     {
         if (consume("+"))
         {
-            node = new_node(ND_ADD, node, mul());
-            if (node->lhs->type->ty != PTR && node->rhs->type->ty == PTR)
+            node = new_node_binop(ND_ADD, node, mul());
+            if (node->lhs->type->ty != TY_PTR && node->rhs->type->ty == TY_PTR)
             {
                 swap_node(&node->lhs, &node->rhs);
-                assert(node->lhs->type->ty == PTR);
+                assert(node->lhs->type->ty == TY_PTR);
             }
             node->type = node->lhs->type;
         }
         else if (consume("-"))
         {
-            node = new_node(ND_SUB, node, mul());
+            node = new_node_binop(ND_SUB, node, mul());
             node->type = node->lhs->type;
         }
         else
@@ -298,12 +304,12 @@ Node *mul()
     {
         if (consume("*"))
         {
-            node = new_node(ND_MUL, node, unary());
+            node = new_node_binop(ND_MUL, node, unary());
             node->type = node->lhs->type;
         }
         else if (consume("/"))
         {
-            node = new_node(ND_DIV, node, unary());
+            node = new_node_binop(ND_DIV, node, unary());
             node->type = node->lhs->type;
         }
         else
@@ -319,19 +325,19 @@ Node *unary()
     }
     else if (consume("-"))
     {
-        Node *node = new_node(ND_SUB, new_node_num(0), primary());
+        Node *node = new_node_binop(ND_SUB, new_node_num(0), primary());
         node->type = node->lhs->type;
         return node;
     }
     else if (consume("&"))
     {
-        Node *node = new_node(ND_ADDR, unary(), NULL);
+        Node *node = new_node_binop(ND_ADDR, unary(), NULL);
         node->type = node->lhs->type;
         return node;
     }
     else if (consume("*"))
     {
-        Node *node = new_node(ND_DEREF, unary(), NULL);
+        Node *node = new_node_binop(ND_DEREF, unary(), NULL);
         node->type = node->lhs->type;
         return node;
     }
@@ -358,8 +364,7 @@ Node *primary()
     {
         if (consume("("))
         {
-            Node *node = calloc(1, sizeof(Node));
-            node->kind = ND_CALL;
+            Node *node = new_node(ND_CALL);
             node->name = strndup(tok->str, tok->len);
             node->args = new_vec();
             node->type = &int_ty;
@@ -370,41 +375,30 @@ Node *primary()
                 Node *arg = expr();
                 vec_push(node->args, arg);
 
-                size_t arg_len = sizeof(register_list_for_arguments) / sizeof(register_list_for_arguments[0]);
-                if (node->args->len > arg_len)
+                size_t args_len = get_register_list_length();
+                if (node->args->len > args_len)
                 {
-                    error_at(token->str, "Only up to %d function arguments are supported.", arg_len);
+                    error_at(token->str, "Only up to %d function arguments are supported.", args_len);
                 }
             }
 
             return node;
         }
 
-        Node *node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-
         LVar *lvar = find_lvar(tok);
-        if (lvar)
-        {
-            node->offset = lvar->offset;
-            node->type = lvar->type;
-        }
-        else
-        {
+        if (!lvar)
             error_at(tok->str, "The variable is not defined.");
-        }
-        return node;
+
+        return new_node_lvar(lvar->offset, lvar->type);
     }
 
     if (consume(D_INT))
     {
-        Type *type = calloc(1, sizeof(Type));
-        type->ty = INT;
+        Type *type = new_type(TY_INT);
 
         while (consume("*"))
         {
-            Type *ptr_typ = calloc(1, sizeof(Type));
-            ptr_typ->ty = PTR;
+            Type *ptr_typ = new_type(TY_PTR);
             ptr_typ->ptr_to = type;
             type = ptr_typ;
         }
@@ -419,25 +413,17 @@ Node *primary()
             if (!array_len)
                 error_at(token->str, "Specify the length of the array.");
 
-            Type *array_type = calloc(1, sizeof(Type));
+            Type *array_type = new_type(TY_ARRAY);
             array_type->array_size = array_len;
-            array_type->ty = ARRAY;
             array_type->ptr_to = type;
             type = array_type;
             expect("]");
         }
 
         LVar *lvar = new_lvar(variable_tok, type);
-
-        Node *node;
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_LVAR;
-        node->type = lvar->type;
-        node->offset = lvar->offset;
-
         vec_push(lvars, lvar);
 
-        return node;
+        return new_node_lvar(lvar->offset, lvar->type);
     }
 
     // ÇªÇ§Ç≈Ç»ÇØÇÍÇŒêîílÇÃÇÕÇ∏

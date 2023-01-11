@@ -21,8 +21,6 @@ void gen_lval(Node *node)
 
 int label = 0;
 
-char *register_list_for_arguments[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
-
 void gen(Node *node)
 {
     switch (node->kind)
@@ -32,7 +30,7 @@ void gen(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
-        if (node->type->ty != ARRAY)
+        if (node->type->ty != TY_ARRAY)
         {
             printf("    pop rax\n");
             printf("    mov rax, [rax]\n");
@@ -127,7 +125,7 @@ void gen(Node *node)
         for (int i = 0; i < node->args->len; i++)
         {
             gen(node->args->data[i]);
-            char *register_name = register_list_for_arguments[i];
+            char *register_name = get_register_name(i);
             printf("    pop rax\n");
             printf("    mov %s, rax\n", register_name);
         }
@@ -154,15 +152,15 @@ void gen(Node *node)
     switch (node->kind)
     {
     case ND_ADD:
-        if ((node->lhs->type->ty == PTR || node->lhs->type->ty == ARRAY) &&
-            !(node->rhs->type->ty == PTR || node->rhs->type->ty == ARRAY))
+        if ((node->lhs->type->ty == TY_PTR || node->lhs->type->ty == TY_ARRAY) &&
+            !(node->rhs->type->ty == TY_PTR || node->rhs->type->ty == TY_ARRAY))
             printf("    imul rdi, %d\n", size_of(node->lhs->type->ptr_to));
 
         printf("  add rax, rdi\n");
         break;
     case ND_SUB:
-        if ((node->lhs->type->ty == PTR || node->lhs->type->ty == ARRAY) &&
-            !(node->rhs->type->ty == PTR || node->rhs->type->ty == ARRAY))
+        if ((node->lhs->type->ty == TY_PTR || node->lhs->type->ty == TY_ARRAY) &&
+            !(node->rhs->type->ty == TY_PTR || node->rhs->type->ty == TY_ARRAY))
             printf("    imul rdi, %d\n", size_of(node->lhs->type->ptr_to));
 
         printf("    sub rax, rdi\n");
@@ -218,7 +216,7 @@ void gen_func(Function *func)
     for (int i = 0; i < func->node->params->len; i++)
     {
         gen_lval(func->node->params->data[i]);
-        char *register_name = strndup(register_list_for_arguments[i], sizeof(register_list_for_arguments[i]));
+        char *register_name = get_register_name(i);
         printf("    pop rax\n");
         printf("    mov [rax], %s\n", register_name);
         printf("    push rdi\n");

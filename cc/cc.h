@@ -95,16 +95,18 @@ void vec_push(Vector *v, void *elem);
 void *vec_pop(Vector *v);
 void *vec_last(Vector *v);
 
+typedef enum
+{
+    TY_INT,
+    TY_PTR,
+    TY_ARRAY,
+} TypeKind;
+
 typedef struct Type Type;
 
 struct Type
 {
-    enum
-    {
-        INT,
-        PTR,
-        ARRAY
-    } ty;
+    TypeKind ty;
     struct Type *ptr_to;
     size_t array_size;
 };
@@ -196,13 +198,18 @@ Program *parse();
 
 void codegen();
 
+/* ------------------------------ 引数用のレジスター ------------------------------ */
+
+size_t get_register_list_length();
+
+char *get_register_name(int num);
+
 /* ------------------------------ グローバル変数 ------------------------------ */
 // 現在着目しているトークン
 extern Token *token;
 // 入力プログラム
 extern char *user_input;
 extern Program *program;
-extern char *register_list_for_arguments[6];
 
 /* ------------------------------ ユーティリティ ------------------------------ */
 void swap_node(Node **p, Node **q);
