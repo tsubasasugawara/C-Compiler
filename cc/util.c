@@ -10,12 +10,11 @@ void swap_node(Node **p, Node **q)
 
 int size_of(Type *type)
 {
-    switch (type->ty)
-    {
-    case INT:
-        return 4;
-    case PTR:
+    if (type->ty == PTR)
         return 8;
-    }
-    return 0;
+    if (type->ty == INT)
+        return 4;
+
+    assert(type->ty == ARRAY);
+    return size_of(type->ptr_to) * type->array_size;
 }

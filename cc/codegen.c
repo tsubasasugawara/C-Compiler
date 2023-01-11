@@ -4,18 +4,19 @@ void gen(Node *node);
 
 void gen_lval(Node *node)
 {
-    if (node->kind == ND_DEREF)
+    switch (node->kind)
     {
+    case ND_LVAR:
+        printf("    mov rax, rbp\n");
+        printf("    sub rax, %d\n", node->offset);
+        printf("    push rax\n");
+        return;
+    case ND_DEREF:
         gen(node->lhs);
         return;
     }
 
-    if (node->kind != ND_LVAR)
-        error("The left-hand side value of the assignment is not a variable.");
-
-    printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
-    printf("    push rax\n");
+    error("The left-hand side value of the assignment is not a variable.");
 }
 
 int label = 0;
@@ -31,9 +32,12 @@ void gen(Node *node)
         return;
     case ND_LVAR:
         gen_lval(node);
-        printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
-        printf("    push rax\n");
+        if (node->type->ty != ARRAY)
+        {
+            printf("    pop rax\n");
+            printf("    mov rax, [rax]\n");
+            printf("    push rax\n");
+        }
         return;
     case ND_ASSIGN:
         gen_lval(node->lhs);
@@ -150,25 +154,17 @@ void gen(Node *node)
     switch (node->kind)
     {
     case ND_ADD:
-        if (node->lhs->type->ty == PTR)
-        {
-            printf("    push rax\n");
-            printf("    push %d\n", size_of(node->lhs->type->ptr_to));
-            printf("    pop rax\n");
-            printf("    imul rdi, rax\n");
-            printf("    pop rax\n");
-        }
-        printf("    add rax, rdi\n");
+        if ((node->lhs->type->ty == PTR || node->lhs->type->ty == ARRAY) &&
+            !(node->rhs->type->ty == PTR || node->rhs->type->ty == ARRAY))
+            printf("    imul rdi, %d\n", size_of(node->lhs->type->ptr_to));
+
+        printf("  add rax, rdi\n");
         break;
     case ND_SUB:
-        if (node->lhs->type->ty == PTR)
-        {
-            printf("    push rax\n");
-            printf("    push %d\n", size_of(node->lhs->type->ptr_to));
-            printf("    pop rax\n");
-            printf("    imul rdi, rax\n");
-            printf("    pop rax\n");
-        }
+        if ((node->lhs->type->ty == PTR || node->lhs->type->ty == ARRAY) &&
+            !(node->rhs->type->ty == PTR || node->rhs->type->ty == ARRAY))
+            printf("    imul rdi, %d\n", size_of(node->lhs->type->ptr_to));
+
         printf("    sub rax, rdi\n");
         break;
     case ND_MUL:
@@ -213,7 +209,11 @@ void gen_func(Function *func)
     // 変数のスペースを確保
     printf("    push rbp\n");
     printf("    mov rbp, rsp\n");
-    printf("    sub rsp, %d\n", (func->lvars->len) * 8);
+    if (func->lvars->len > 0)
+    {
+        LVar *last = vec_last(func->lvars);
+        printf("    sub rsp, %d\n", last->offset);
+    }
 
     for (int i = 0; i < func->node->params->len; i++)
     {

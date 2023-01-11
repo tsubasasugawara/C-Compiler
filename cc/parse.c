@@ -3,7 +3,7 @@
 // ƒ[ƒJƒ‹•Ï”
 Vector *lvars;
 
-Type int_ty = {INT, NULL};
+Type int_ty = {INT, NULL, 1};
 
 LVar *find_lvar(Token *tok)
 {
@@ -41,8 +41,19 @@ LVar *new_lvar(Token *tok, Type *type)
     lvar = calloc(1, sizeof(LVar));
     lvar->name = tok->str;
     lvar->len = tok->len;
-    lvar->offset = (lvars->len + 1) * 8;
     lvar->type = type;
+
+    int prev_offset = 0;
+    if (lvars->len > 0)
+    {
+        LVar *last = vec_last(lvars);
+        prev_offset = last->offset;
+    }
+    if (type->ty == ARRAY)
+        lvar->offset = prev_offset + size_of(type);
+    else
+        lvar->offset = prev_offset + 8;
+
     return lvar;
 }
 
@@ -260,9 +271,9 @@ Node *add()
         if (consume("+"))
         {
             node = new_node(ND_ADD, node, mul());
-            if (node->rhs->type->ty == PTR)
+            if (node->lhs->type->ty != PTR && node->rhs->type->ty == PTR)
             {
-                swap_node(&node->rhs, &node->lhs);
+                swap_node(&node->lhs, &node->rhs);
                 assert(node->lhs->type->ty == PTR);
             }
             node->type = node->lhs->type;
@@ -401,6 +412,20 @@ Node *primary()
         Token *variable_tok = consume_ident();
         if (!variable_tok)
             error_at(variable_tok->str, "Expected itentifier.");
+
+        if (consume("["))
+        {
+            int array_len = expect_number();
+            if (!array_len)
+                error_at(token->str, "Specify the length of the array.");
+
+            Type *array_type = calloc(1, sizeof(Type));
+            array_type->array_size = array_len;
+            array_type->ty = ARRAY;
+            array_type->ptr_to = type;
+            type = array_type;
+            expect("]");
+        }
 
         LVar *lvar = new_lvar(variable_tok, type);
 

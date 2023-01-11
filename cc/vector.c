@@ -25,3 +25,9 @@ void *vec_pop(Vector *v)
     assert(v->len);
     return v->data[--v->len];
 }
+
+void *vec_last(Vector *v)
+{
+    assert(v->len);
+    return v->data[v->len - 1];
+}

@@ -93,6 +93,7 @@ struct Vector
 Vector *new_vec();
 void vec_push(Vector *v, void *elem);
 void *vec_pop(Vector *v);
+void *vec_last(Vector *v);
 
 typedef struct Type Type;
 
@@ -101,9 +102,11 @@ struct Type
     enum
     {
         INT,
-        PTR
+        PTR,
+        ARRAY
     } ty;
     struct Type *ptr_to;
+    size_t array_size;
 };
 
 // ’ŠÛ\•¶–Ø‚Ìƒm[ƒh‚Ìí—Ş
