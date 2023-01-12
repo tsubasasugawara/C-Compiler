@@ -3,12 +3,36 @@
 // ローカル変数
 Vector *lvars;
 
+// TODO: 関数をマップで管理する
+
 Type int_ty = {TY_INT, NULL, 0};
 
 Type *new_type(TypeKind ty)
 {
     Type *type = calloc(1, sizeof(Type));
     type->ty = ty;
+    return type;
+}
+
+// 宣言されている型を返す
+Type *parse_type()
+{
+    if (consume(D_INT))
+    {
+        return new_type(TY_INT);
+    }
+    return NULL;
+}
+
+// *を繰り返し読み、ポインタ型を実現する
+Type *parse_pointer_type(Type *type)
+{
+    while (consume("*"))
+    {
+        Type *ptr_typ = new_type(TY_PTR);
+        ptr_typ->ptr_to = type;
+        type = ptr_typ;
+    }
     return type;
 }
 
@@ -95,6 +119,79 @@ Node *new_node_function(char *func_name, Node *stmt, Vector *params)
     return node;
 }
 
+Node *new_call_func(Token *tok)
+{
+    if (consume("("))
+    {
+        Node *node = new_node(ND_CALL);
+        node->name = strndup(tok->str, tok->len);
+        node->args = new_vec();
+        // TODO:関数に合わせて変える
+        node->type = &int_ty;
+
+        while (!consume(")"))
+        {
+            consume(",");
+            Node *arg = expr();
+            vec_push(node->args, arg);
+
+            size_t args_len = get_register_list_length();
+            if (node->args->len > args_len)
+            {
+                error_at(token->str, "Only up to %d function arguments are supported.", args_len);
+            }
+        }
+
+        return node;
+    }
+    return NULL;
+}
+
+Node *new_call_array(LVar *lvar)
+{
+    if (consume("["))
+    {
+        Node *index = expr();
+        Node *array = new_node_lvar(lvar->offset, lvar->type);
+        expect("]");
+
+        Node *array_offset = new_node_binop(ND_ADD, array, index);
+        Node *array_access = new_node(ND_DEREF);
+        array_access->lhs = array_offset;
+        array_access->type = array_offset->lhs->type->ptr_to;
+        return array_access;
+    }
+    return NULL;
+}
+
+Node *new_vardef(Type *var_type)
+{
+    Type *type = new_type(var_type->ty);
+    type = parse_pointer_type(type);
+
+    Token *variable_tok = consume_ident();
+    if (!variable_tok)
+        error_at(variable_tok->str, "Expected itentifier.");
+
+    if (consume("["))
+    {
+        int array_len = expect_number();
+        if (!array_len)
+            error_at(token->str, "Specify the length of the array.");
+
+        Type *array_type = new_type(TY_ARRAY);
+        array_type->array_size = array_len;
+        array_type->ptr_to = type;
+        type = array_type;
+        expect("]");
+    }
+
+    LVar *lvar = new_lvar(variable_tok, type);
+    vec_push(lvars, lvar);
+
+    return new_node_lvar(lvar->offset, lvar->type);
+}
+
 Program *parse();
 Node *stmt();
 Node *expr();
@@ -113,7 +210,10 @@ Program *parse()
 
     while (!at_eof())
     {
-        expect(D_INT);
+        Type *return_type = parse_type();
+        if (!return_type)
+            error("Specify the return type.");
+
         Token *tok = consume_ident();
         if (!tok)
             error_at(tok->str, "A top-level function definition is required.");
@@ -124,7 +224,9 @@ Program *parse()
         expect("(");
         while (!consume(")"))
         {
-            expect(D_INT);
+            Type *arg_type = parse_type();
+            if (!arg_type)
+                error("Define type.");
 
             Token *param_tok = consume_ident();
             if (!param_tok || param_tok->kind != TK_IDENT)
@@ -134,13 +236,14 @@ Program *parse()
             if (params->len > args_len)
                 error_at(param_tok->str, "Only up to %d function arguments are supported.", args_len);
 
-            vec_push(lvars, new_lvar(param_tok, &int_ty));
-            vec_push(params, new_node_lvar((params->len + 1) * 8, &int_ty));
+            vec_push(lvars, new_lvar(param_tok, arg_type));
+            vec_push(params, new_node_lvar((params->len + 1) * 8, arg_type));
             consume(",");
         }
 
         char *func_name = strndup(tok->str, tok->len);
         Node *node = new_node_function(func_name, stmt(), params);
+        node->return_type = return_type;
         vec_push(program->funcs, new_function(node->name, node, lvars));
     }
 
@@ -362,82 +465,24 @@ Node *primary()
     Token *tok = consume_ident();
     if (tok)
     {
-        if (consume("("))
-        {
-            Node *node = new_node(ND_CALL);
-            node->name = strndup(tok->str, tok->len);
-            node->args = new_vec();
-            node->type = &int_ty;
-
-            while (!consume(")"))
-            {
-                consume(",");
-                Node *arg = expr();
-                vec_push(node->args, arg);
-
-                size_t args_len = get_register_list_length();
-                if (node->args->len > args_len)
-                {
-                    error_at(token->str, "Only up to %d function arguments are supported.", args_len);
-                }
-            }
-
+        Node *node = new_call_func(tok);
+        if (node)
             return node;
-        }
 
         LVar *lvar = find_lvar(tok);
         if (!lvar)
             error_at(tok->str, "The variable is not defined.");
 
-        if (consume("["))
-        {
-            Node *index = expr();
-            Node *array = new_node_lvar(lvar->offset, lvar->type);
-            expect("]");
-
-            Node *array_offset = new_node_binop(ND_ADD, array, index);
-            Node *array_access = new_node(ND_DEREF);
-            array_access->lhs = array_offset;
-            array_access->type = array_offset->lhs->type->ptr_to;
-            return array_access;
-        }
+        node = new_call_array(lvar);
+        if (node)
+            return node;
 
         return new_node_lvar(lvar->offset, lvar->type);
     }
 
-    if (consume(D_INT))
-    {
-        Type *type = new_type(TY_INT);
-
-        while (consume("*"))
-        {
-            Type *ptr_typ = new_type(TY_PTR);
-            ptr_typ->ptr_to = type;
-            type = ptr_typ;
-        }
-
-        Token *variable_tok = consume_ident();
-        if (!variable_tok)
-            error_at(variable_tok->str, "Expected itentifier.");
-
-        if (consume("["))
-        {
-            int array_len = expect_number();
-            if (!array_len)
-                error_at(token->str, "Specify the length of the array.");
-
-            Type *array_type = new_type(TY_ARRAY);
-            array_type->array_size = array_len;
-            array_type->ptr_to = type;
-            type = array_type;
-            expect("]");
-        }
-
-        LVar *lvar = new_lvar(variable_tok, type);
-        vec_push(lvars, lvar);
-
-        return new_node_lvar(lvar->offset, lvar->type);
-    }
+    Type *var_type = parse_type();
+    if (var_type)
+        return new_vardef(var_type);
 
     // そうでなければ数値のはず
     return new_node_num(expect_number());

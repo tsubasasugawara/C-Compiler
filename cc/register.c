@@ -1,6 +1,6 @@
 #include "./cc.h"
 
-char *register_list[6] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
+char *register_list[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 size_t get_register_list_length()
 {

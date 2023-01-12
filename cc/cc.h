@@ -95,6 +95,14 @@ void vec_push(Vector *v, void *elem);
 void *vec_pop(Vector *v);
 void *vec_last(Vector *v);
 
+typedef struct Map Map;
+
+struct Map
+{
+    Vector *keys;
+    Vector *elems;
+};
+
 typedef enum
 {
     TY_INT,
@@ -159,10 +167,11 @@ struct Node
     Vector *args;   // 引数
     Vector *params; // 関数のパラメタ
 
-    int val;    // kindがND_NUMの場合のみ使う
-    int offset; // kindがND_LVARの場合のみ使う
-    char *name; // kindがND_CALLの場合のみ使う
-    Type *type; // 変数のときに型を格納
+    int val;           // kindがND_NUMの場合のみ使う
+    int offset;        // kindがND_LVARの場合のみ使う
+    char *name;        // kindがND_CALLの場合のみ使う
+    Type *type;        // 変数のときに型を格納
+    Type *return_type; // 関数の戻り値の型
 };
 
 typedef struct LVar LVar;
