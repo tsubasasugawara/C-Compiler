@@ -7,16 +7,33 @@ Map *new_map()
     map->elems = new_vec();
 }
 
+/*
+ * keyが存在するかを確かめる
+ * @param map : マップ配列
+ * @param key : 確認したいキー
+ * @return : 存在すればインデックス、存在しなければ-1
+ */
+int map_find(Map *map, void *key)
+{
+    for (int i = 0; i < map->keys->len; i++)
+        if (strlen(map->keys->data[i]) == strlen(key) && memcmp(map->keys->data[i], key, strlen(key)))
+            return i;
+    return -1;
+}
+
 void map_put(Map *map, void *key, void *elem)
 {
+    if (map_find(map, key) <= -1)
+        return;
+
     vec_push(map->keys, key);
     vec_push(map->elems, elem);
 }
 
 void *map_get(Map *map, void *key)
 {
-    for (int i = 0; i < map->keys->len; i++)
-        if (map->keys->data[i] == key)
-            return map->keys->data[i];
+    int index = map_find(map, key);
+    if (index > -1)
+        return map->elems->data[index];
     return NULL;
 }
