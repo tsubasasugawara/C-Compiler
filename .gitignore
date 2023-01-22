@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 *
 !*/
 
@@ -7,3 +8,11 @@
 !*.sh
 !Makefile
 !Dockerfile
+=======
+*~
+*.o
+tmp*
+a.out
+cc/cc
+*.pdf
+>>>>>>> Stashed changes

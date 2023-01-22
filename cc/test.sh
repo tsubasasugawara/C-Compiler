@@ -342,6 +342,11 @@ int main() {
     *y = 3;
     return x;
 }"
+assert 6 "
+int main() {
+    int *p = alloc(6, 3);
+    return *p;
+}"
 assert 3 "
 int main() {
     int *p = alloc(6, 3);
@@ -415,5 +420,12 @@ int main() {
     a[0 + 1] = 5;
     return a[0] + a[1];
 }"
+assert 0 "
+int *foo;
+int bar[10];
+int *bazz() {}
+int foobar() {}
+int main() { return 0; }
+"
 
 echo OK

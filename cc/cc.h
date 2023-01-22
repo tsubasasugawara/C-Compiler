@@ -103,6 +103,11 @@ struct Map
     Vector *elems;
 };
 
+Map *new_map();
+int map_find(Map *map, void *key);
+void map_put(Map *map, void *key, void *elem);
+void *map_get(Map *map, void *key);
+
 typedef enum
 {
     TY_INT,
@@ -142,6 +147,7 @@ typedef enum
     ND_BLOCK,  // {}の中
     ND_CALL,   // 関数呼び出し
     ND_FUNC,   // 関数定義
+    ND_GVAR,   // グローバル変数
 } NodeKind;
 
 typedef struct Node Node;
@@ -183,6 +189,7 @@ struct LVar
     int len;    // 名前の長さ
     int offset; // RBPからのオフセット
     Type *type; // 型
+    bool is_local;
 };
 
 typedef struct Function Function;
@@ -199,6 +206,7 @@ typedef struct Program Program;
 struct Program
 {
     Vector *funcs;
+    Map *gvars;
 };
 
 Program *parse();

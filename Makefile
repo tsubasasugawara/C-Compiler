@@ -1,14 +1,14 @@
 build:
-	docker build -t alpine:exec-c .
+	docker build -t alpine:clang .
 
 run:
-	docker run --rm -it -v $(PWD)/cc:/cc -w /cc alpine:exec-c
+	docker run --rm -it -v $(PWD)/cc:/cc -w /cc alpine:clang
 
 test:
-	docker run --rm -v $(PWD)/cc:/cc -w /cc alpine:exec-c make test
+	docker run --rm -v $(PWD)/cc:/cc -w /cc alpine:clang make test
 
 rmi:
-	docker rmi $$(docker images -q alpine:exec-c)
+	docker rmi $$(docker images -q alpine:clang)
 
 # make commit m=<arg>
 commit:

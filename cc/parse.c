@@ -3,9 +3,18 @@
 // ローカル変数
 Vector *lvars;
 
-// TODO: 関数をマップで管理する
-
 Type int_ty = {TY_INT, NULL, 0};
+
+Program *parse();
+Node *stmt();
+Node *expr();
+Node *assign();
+Node *equality();
+Node *relational();
+Node *add();
+Node *mul();
+Node *unary();
+Node *primary();
 
 Type *new_type(TypeKind ty)
 {
@@ -17,22 +26,19 @@ Type *new_type(TypeKind ty)
 // 宣言されている型を返す
 Type *parse_type()
 {
+    Type *type;
     if (consume(D_INT))
-    {
-        return new_type(TY_INT);
-    }
-    return NULL;
-}
+        type = new_type(TY_INT);
+    else
+        return NULL;
 
-// *を繰り返し読み、ポインタ型を実現する
-Type *parse_pointer_type(Type *type)
-{
     while (consume("*"))
     {
         Type *ptr_typ = new_type(TY_PTR);
         ptr_typ->ptr_to = type;
         type = ptr_typ;
     }
+
     return type;
 }
 
@@ -55,6 +61,7 @@ LVar *new_lvar(Token *tok, Type *type)
     lvar->name = tok->str;
     lvar->len = tok->len;
     lvar->type = type;
+    lvar->is_local = true;
 
     int prev_offset = 0;
     if (lvars->len > 0)
@@ -164,11 +171,8 @@ Node *new_call_array(LVar *lvar)
     return NULL;
 }
 
-Node *new_vardef(Type *var_type)
+Node *new_vardef(Type *type)
 {
-    Type *type = new_type(var_type->ty);
-    type = parse_pointer_type(type);
-
     Token *variable_tok = consume_ident();
     if (!variable_tok)
         error_at(variable_tok->str, "Expected itentifier.");
@@ -192,26 +196,16 @@ Node *new_vardef(Type *var_type)
     return new_node_lvar(lvar->offset, lvar->type);
 }
 
-Program *parse();
-Node *stmt();
-Node *expr();
-Node *assign();
-Node *equality();
-Node *relational();
-Node *add();
-Node *mul();
-Node *unary();
-Node *primary();
-
 Program *parse()
 {
     Program *program = calloc(1, sizeof(Program));
     program->funcs = new_vec();
+    program->gvars = new_map();
 
     while (!at_eof())
     {
-        Type *return_type = parse_type();
-        if (!return_type)
+        Type *type = parse_type();
+        if (!type)
             error("Specify the return type.");
 
         Token *tok = consume_ident();
@@ -221,30 +215,46 @@ Program *parse()
         Vector *params = new_vec();
         lvars = new_vec();
 
-        expect("(");
-        while (!consume(")"))
+        if (consume("("))
         {
-            Type *arg_type = parse_type();
-            if (!arg_type)
-                error("Define type.");
 
-            Token *param_tok = consume_ident();
-            if (!param_tok || param_tok->kind != TK_IDENT)
-                error_at(param_tok->str, "Arguments required.");
+            while (!consume(")"))
+            {
+                Type *arg_type = parse_type();
+                if (!arg_type)
+                    error("Define type.");
 
-            size_t args_len = get_register_list_length();
-            if (params->len > args_len)
-                error_at(param_tok->str, "Only up to %d function arguments are supported.", args_len);
+                Token *param_tok = consume_ident();
+                if (!param_tok || param_tok->kind != TK_IDENT)
+                    error_at(param_tok->str, "Arguments required.");
 
-            vec_push(lvars, new_lvar(param_tok, arg_type));
-            vec_push(params, new_node_lvar((params->len + 1) * 8, arg_type));
-            consume(",");
+                size_t args_len = get_register_list_length();
+                if (params->len > args_len)
+                    error_at(param_tok->str, "Only up to %d function arguments are supported.", args_len);
+
+                vec_push(lvars, new_lvar(param_tok, arg_type));
+                vec_push(params, new_node_lvar((params->len + 1) * 8, arg_type));
+                consume(",");
+            }
+
+            char *func_name = strndup(tok->str, tok->len);
+            Node *node = new_node_function(func_name, stmt(), params);
+            node->return_type = type;
+            vec_push(program->funcs, new_function(node->name, node, lvars));
         }
-
-        char *func_name = strndup(tok->str, tok->len);
-        Node *node = new_node_function(func_name, stmt(), params);
-        node->return_type = return_type;
-        vec_push(program->funcs, new_function(node->name, node, lvars));
+        else
+        {
+            LVar *var = new_lvar(tok, type);
+            var->is_local = false;
+            // TODO: 配列に対応
+            if (consume("["))
+            {
+                expect_number();
+                expect("]");
+            }
+            map_put(program->gvars, var->name, var);
+            expect(";");
+        }
     }
 
     return program;
