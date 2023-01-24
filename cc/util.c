@@ -18,3 +18,11 @@ int size_of(Type *type)
     assert(type->ty == TY_ARRAY);
     return size_of(type->ptr_to) * type->array_size;
 }
+
+int calc_need_byte(Type *type)
+{
+    if (type->ty == TY_ARRAY)
+        return size_of(type->ptr_to) * type->array_size;
+
+    return 8;
+}

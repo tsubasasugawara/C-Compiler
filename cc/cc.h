@@ -104,7 +104,6 @@ struct Map
 };
 
 Map *new_map();
-int map_find(Map *map, void *key);
 void map_put(Map *map, void *key, void *elem);
 void *map_get(Map *map, void *key);
 
@@ -175,21 +174,20 @@ struct Node
 
     int val;           // kindがND_NUMの場合のみ使う
     int offset;        // kindがND_LVARの場合のみ使う
-    char *name;        // kindがND_CALLの場合のみ使う
+    char *name;        // kindがND_CALL,ND_GVARの場合のみ使う
     Type *type;        // 変数のときに型を格納
     Type *return_type; // 関数の戻り値の型
 };
 
-typedef struct LVar LVar;
+typedef struct Var Var;
 
 // ローカル変数の型
-struct LVar
+struct Var
 {
     char *name; // 変数の名前
     int len;    // 名前の長さ
     int offset; // RBPからのオフセット
     Type *type; // 型
-    bool is_local;
 };
 
 typedef struct Function Function;
@@ -231,3 +229,4 @@ extern Program *program;
 /* ------------------------------ ユーティリティ ------------------------------ */
 void swap_node(Node **p, Node **q);
 int size_of(Type *type);
+int calc_need_byte(Type *type);

@@ -14,6 +14,11 @@ void gen_lval(Node *node)
     case ND_DEREF:
         gen(node->lhs);
         return;
+    case ND_GVAR:
+        // printf("    lea rax, %s[rip]\n", node->name);
+        printf("    mov DWORD PTR %s[rip], rax", node->name);
+        printf("    push rax\n");
+        return;
     }
 
     error("The left-hand side value of the assignment is not a variable.");
@@ -28,6 +33,7 @@ void gen(Node *node)
     case ND_NUM:
         printf("    push %d\n", node->val);
         return;
+    case ND_GVAR:
     case ND_LVAR:
         gen_lval(node);
         if (node->type->ty != TY_ARRAY)
@@ -44,7 +50,6 @@ void gen(Node *node)
         printf("    pop rdi\n");
         printf("    pop rax\n");
         printf("    mov [rax], rdi\n");
-        printf("    push rdi\n");
         return;
     case ND_RETURN:
         gen(node->lhs);
@@ -156,7 +161,7 @@ void gen(Node *node)
             !(node->rhs->type->ty == TY_PTR || node->rhs->type->ty == TY_ARRAY))
             printf("    imul rdi, %d\n", size_of(node->lhs->type->ptr_to));
 
-        printf("  add rax, rdi\n");
+        printf("    add rax, rdi\n");
         break;
     case ND_SUB:
         if ((node->lhs->type->ty == TY_PTR || node->lhs->type->ty == TY_ARRAY) &&
@@ -198,10 +203,17 @@ void gen(Node *node)
     return;
 }
 
+void gen_gvar(Var *gvar)
+{
+    printf("    .globl %s\n", gvar->name);
+    printf("%s:\n", gvar->name);
+    printf("    .zero %d\n", calc_need_byte(gvar->type));
+}
+
 void gen_func(Function *func)
 {
     // 関数定義のプロローグ
-    printf(".globl %s\n", func->name);
+    printf("    .globl %s\n", func->name);
     printf("%s:\n", func->name);
 
     // 変数のスペースを確保
@@ -209,7 +221,7 @@ void gen_func(Function *func)
     printf("    mov rbp, rsp\n");
     if (func->lvars->len > 0)
     {
-        LVar *last = vec_last(func->lvars);
+        Var *last = vec_last(func->lvars);
         printf("    sub rsp, %d\n", last->offset);
     }
 
@@ -235,9 +247,16 @@ void gen_func(Function *func)
 void codegen()
 {
     // アセンブリの前半部分を出力
-    printf(".intel_syntax noprefix\n");
+    printf("    .intel_syntax noprefix\n");
+
+    printf("    .bss\n");
+    for (int i = 0; i < program->gvars->keys->len; i++)
+    {
+        gen_gvar(program->gvars->elems->data[i]);
+    }
 
     // 先頭の式から順にコード生成
+    printf("    .text\n");
     for (int i = 0; i < program->funcs->len; i++)
     {
         gen_func(program->funcs->data[i]);

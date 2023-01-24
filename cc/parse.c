@@ -42,11 +42,11 @@ Type *parse_type()
     return type;
 }
 
-LVar *find_lvar(Token *tok)
+Var *find_lvar(Token *tok)
 {
     for (int i = 0; i < lvars->len; i++)
     {
-        LVar *var;
+        Var *var;
         var = lvars->data[i];
         if (var->len == tok->len && !memcmp(tok->str, var->name, var->len))
             return var;
@@ -54,27 +54,23 @@ LVar *find_lvar(Token *tok)
     return NULL;
 }
 
-LVar *new_lvar(Token *tok, Type *type)
+Var *new_var(Token *tok, Type *type, bool is_local)
 {
-    LVar *lvar;
-    lvar = calloc(1, sizeof(LVar));
-    lvar->name = tok->str;
-    lvar->len = tok->len;
-    lvar->type = type;
-    lvar->is_local = true;
+    Var *var;
+    var = calloc(1, sizeof(Var));
+    var->name = strndup(tok->str, tok->len);
+    var->len = tok->len;
+    var->type = type;
 
     int prev_offset = 0;
-    if (lvars->len > 0)
+    if (is_local && lvars->len > 0)
     {
-        LVar *last = vec_last(lvars);
+        Var *last = vec_last(lvars);
         prev_offset = last->offset;
     }
-    if (type->ty == TY_ARRAY)
-        lvar->offset = prev_offset + size_of(type);
-    else
-        lvar->offset = prev_offset + 8;
+    var->offset = prev_offset + calc_need_byte(var->type);
 
-    return lvar;
+    return var;
 }
 
 Function *new_function(char *func_name, Node *node, Vector *lvars)
@@ -117,6 +113,28 @@ Node *new_node_lvar(int offset, Type *type)
     return node;
 }
 
+Node *new_node_gvar(char *name, Type *type)
+{
+    Node *node = new_node(ND_GVAR);
+    node->name = strdup(name);
+    node->type = type;
+    return node;
+}
+
+Node *new_node_var(Token *tok)
+{
+    Node *node = calloc(1, sizeof(Node));
+
+    Var *lvar = find_lvar(tok);
+    if (lvar)
+        return new_node_lvar(lvar->offset, lvar->type);
+
+    Var *var = map_get(program->gvars, strndup(tok->str, tok->len));
+    if (!var)
+        error_at(tok->str, "The variable is not defined.");
+    return new_node_gvar(var->name, var->type);
+}
+
 Node *new_node_function(char *func_name, Node *stmt, Vector *params)
 {
     Node *node = new_node(ND_FUNC);
@@ -154,21 +172,13 @@ Node *new_call_func(Token *tok)
     return NULL;
 }
 
-Node *new_call_array(LVar *lvar)
+Node *new_call_array(Node *node, Node *index)
 {
-    if (consume("["))
-    {
-        Node *index = expr();
-        Node *array = new_node_lvar(lvar->offset, lvar->type);
-        expect("]");
-
-        Node *array_offset = new_node_binop(ND_ADD, array, index);
-        Node *array_access = new_node(ND_DEREF);
-        array_access->lhs = array_offset;
-        array_access->type = array_offset->lhs->type->ptr_to;
-        return array_access;
-    }
-    return NULL;
+    Node *array_offset = new_node_binop(ND_ADD, node, index);
+    Node *array_access = new_node(ND_DEREF);
+    array_access->lhs = array_offset;
+    array_access->type = array_offset->lhs->type->ptr_to;
+    node = array_access;
 }
 
 Node *new_vardef(Type *type)
@@ -190,7 +200,7 @@ Node *new_vardef(Type *type)
         expect("]");
     }
 
-    LVar *lvar = new_lvar(variable_tok, type);
+    Var *lvar = new_var(variable_tok, type, true);
     vec_push(lvars, lvar);
 
     return new_node_lvar(lvar->offset, lvar->type);
@@ -212,11 +222,10 @@ Program *parse()
         if (!tok)
             error_at(tok->str, "A top-level function definition is required.");
 
-        Vector *params = new_vec();
-        lvars = new_vec();
-
         if (consume("("))
         {
+            Vector *params = new_vec();
+            lvars = new_vec();
 
             while (!consume(")"))
             {
@@ -232,7 +241,7 @@ Program *parse()
                 if (params->len > args_len)
                     error_at(param_tok->str, "Only up to %d function arguments are supported.", args_len);
 
-                vec_push(lvars, new_lvar(param_tok, arg_type));
+                vec_push(lvars, new_var(param_tok, arg_type, true));
                 vec_push(params, new_node_lvar((params->len + 1) * 8, arg_type));
                 consume(",");
             }
@@ -244,14 +253,19 @@ Program *parse()
         }
         else
         {
-            LVar *var = new_lvar(tok, type);
-            var->is_local = false;
-            // TODO: ”z—ñ‚É‘Î‰ž
             if (consume("["))
             {
-                expect_number();
+                int array_len = expect_number();
+                if (!array_len)
+                    error_at(token->str, "Specify the length of the array.");
+
+                Type *array_type = new_type(TY_ARRAY);
+                array_type->array_size = array_len;
+                array_type->ptr_to = type;
+                type = array_type;
                 expect("]");
             }
+            Var *var = new_var(tok, type, false);
             map_put(program->gvars, var->name, var);
             expect(";");
         }
@@ -479,15 +493,16 @@ Node *primary()
         if (node)
             return node;
 
-        LVar *lvar = find_lvar(tok);
-        if (!lvar)
-            error_at(tok->str, "The variable is not defined.");
+        node = new_node_var(tok);
 
-        node = new_call_array(lvar);
-        if (node)
-            return node;
+        if (consume("["))
+        {
+            Node *index = expr();
+            expect("]");
+            node = new_call_array(node, index);
+        }
 
-        return new_node_lvar(lvar->offset, lvar->type);
+        return node;
     }
 
     Type *var_type = parse_type();

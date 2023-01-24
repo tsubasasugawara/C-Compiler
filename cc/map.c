@@ -5,6 +5,7 @@ Map *new_map()
     Map *map = calloc(1, sizeof(Map));
     map->keys = new_vec();
     map->elems = new_vec();
+    return map;
 }
 
 /*
@@ -16,14 +17,14 @@ Map *new_map()
 int map_find(Map *map, void *key)
 {
     for (int i = 0; i < map->keys->len; i++)
-        if (strlen(map->keys->data[i]) == strlen(key) && memcmp(map->keys->data[i], key, strlen(key)))
+        if (strcmp(map->keys->data[i], key))
             return i;
     return -1;
 }
 
 void map_put(Map *map, void *key, void *elem)
 {
-    if (map_find(map, key) <= -1)
+    if (map_find(map, key) != -1)
         return;
 
     vec_push(map->keys, key);
@@ -33,7 +34,8 @@ void map_put(Map *map, void *key, void *elem)
 void *map_get(Map *map, void *key)
 {
     int index = map_find(map, key);
-    if (index > -1)
-        return map->elems->data[index];
-    return NULL;
+    if (index == -1)
+        return NULL;
+
+    return map->elems->data[index];
 }
