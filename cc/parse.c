@@ -3,7 +3,7 @@
 // ƒ[ƒJƒ‹•Ï”
 Vector *lvars;
 
-Vector *funcs;
+Map *funcs;
 
 Map *gvars;
 
@@ -163,8 +163,12 @@ Node *new_call_func(Token *tok)
         Node *node = new_node(ND_CALL);
         node->name = strndup(tok->str, tok->len);
         node->args = new_vec();
-        // TODO:ŠÖ”‚É‡‚í‚¹‚Ä•Ï‚¦‚é
-        node->type = &int_ty;
+
+        Node *func = map_get(funcs, node->name);
+        if (func)
+            node->type = func->type;
+        else
+            node->type = &int_ty;
 
         while (!consume(")"))
         {
@@ -228,7 +232,7 @@ Node *new_vardef(Type *type)
 Program *parse()
 {
     Program *program = calloc(1, sizeof(Program));
-    funcs = new_vec();
+    funcs = new_map();
     gvars = new_map();
 
     while (!at_eof())
@@ -268,7 +272,7 @@ Program *parse()
             char *func_name = strndup(tok->str, tok->len);
             Node *node = new_node_function(func_name, stmt(), params);
             node->return_type = type;
-            vec_push(funcs, new_function(node->name, node, lvars));
+            map_put(funcs, node->name, new_function(node->name, node, lvars));
         }
         else
         {

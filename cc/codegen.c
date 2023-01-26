@@ -256,9 +256,9 @@ void codegen()
 
     // æ“ª‚Ì®‚©‚ç‡‚ÉƒR[ƒh¶¬
     printf("    .text\n");
-    for (int i = 0; i < program->funcs->len; i++)
+    for (int i = 0; i < program->funcs->keys->len; i++)
     {
-        gen_func(program->funcs->data[i]);
+        gen_func(program->funcs->elems->data[i]);
     }
 
     return;

@@ -206,7 +206,7 @@ typedef struct Program Program;
 
 struct Program
 {
-    Vector *funcs;
+    Map *funcs;
     Map *gvars;
 };
 
