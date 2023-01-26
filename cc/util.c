@@ -14,6 +14,8 @@ int size_of(Type *type)
         return 8;
     if (type->ty == TY_INT)
         return 4;
+    if (type->ty == TY_CHAR)
+        return 1;
 
     assert(type->ty == TY_ARRAY);
     return size_of(type->ptr_to) * type->array_size;

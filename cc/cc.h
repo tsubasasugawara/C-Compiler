@@ -13,6 +13,7 @@
 #define D_WHILE "while"
 #define D_FOR "for"
 #define D_INT "int"
+#define D_CHAR "char"
 #define D_SIZEOF "sizeof"
 
 /* ------------------------------トークナイザー ------------------------------ */
@@ -29,6 +30,7 @@ typedef enum
     TK_WHILE,    // while
     TK_FOR,      // for
     TK_INT,      // int型
+    TK_CHAR,     // char型
     TK_SIZEOF,   // sizeof
 } TokenKind;
 
@@ -112,6 +114,7 @@ typedef enum
     TY_INT,
     TY_PTR,
     TY_ARRAY,
+    TY_CHAR,
 } TypeKind;
 
 typedef struct Type Type;

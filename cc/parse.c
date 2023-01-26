@@ -7,7 +7,8 @@ Vector *funcs;
 
 Map *gvars;
 
-Type int_ty = {TY_INT, NULL, 0};
+Type int_ty = {TY_INT, NULL, 1};
+Type char_ty = {TY_CHAR, NULL, 0};
 
 Program *parse();
 Node *stmt();
@@ -33,6 +34,8 @@ Type *parse_type()
     Type *type;
     if (consume(D_INT))
         type = new_type(TY_INT);
+    else if (consume(D_CHAR))
+        type = new_type(TY_CHAR);
     else
         return NULL;
 
@@ -190,6 +193,20 @@ Node *new_call_array(Node *node, Node *index)
     node = array_access;
 }
 
+Type *type_array(Type *type)
+{
+    int array_len = expect_number();
+    if (!array_len)
+        error_at(token->str, "Specify the length of the array.");
+
+    Type *array_type = new_type(TY_ARRAY);
+    array_type->array_size = array_len;
+    array_type->ptr_to = type;
+    type = array_type;
+
+    return type;
+}
+
 Node *new_vardef(Type *type)
 {
     Token *variable_tok = consume_ident();
@@ -198,14 +215,7 @@ Node *new_vardef(Type *type)
 
     if (consume("["))
     {
-        int array_len = expect_number();
-        if (!array_len)
-            error_at(token->str, "Specify the length of the array.");
-
-        Type *array_type = new_type(TY_ARRAY);
-        array_type->array_size = array_len;
-        array_type->ptr_to = type;
-        type = array_type;
+        type = type_array(type);
         expect("]");
     }
 
@@ -264,14 +274,7 @@ Program *parse()
         {
             if (consume("["))
             {
-                int array_len = expect_number();
-                if (!array_len)
-                    error_at(token->str, "Specify the length of the array.");
-
-                Type *array_type = new_type(TY_ARRAY);
-                array_type->array_size = array_len;
-                array_type->ptr_to = type;
-                type = array_type;
+                type = type_array(type);
                 expect("]");
             }
             Var *var = new_var(tok, type, false);

@@ -466,5 +466,25 @@ int main() {
     return foobar() + foo;
 }
 "
+assert 3 "
+int main(){
+    char x[3];
+    x[0] = -1;
+    x[1] = 2;
+    int y;
+    y = 4;
+    return x[0] + y;
+}
+"
+assert 6 "
+int main(){
+    char x[3];
+    x[0] = -1;
+    x[1] = 2;
+    int y;
+    y = 4;
+    return x[1] + y;
+}
+"
 
 echo OK
