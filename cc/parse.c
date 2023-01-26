@@ -3,6 +3,10 @@
 // ƒ[ƒJƒ‹•Ï”
 Vector *lvars;
 
+Vector *funcs;
+
+Map *gvars;
+
 Type int_ty = {TY_INT, NULL, 0};
 
 Program *parse();
@@ -52,6 +56,11 @@ Var *find_lvar(Token *tok)
             return var;
     }
     return NULL;
+}
+
+Var *find_gvar(Token *tok)
+{
+    return map_get(gvars, tok->str);
 }
 
 Var *new_var(Token *tok, Type *type, bool is_local)
@@ -129,7 +138,7 @@ Node *new_node_var(Token *tok)
     if (lvar)
         return new_node_lvar(lvar->offset, lvar->type);
 
-    Var *var = map_get(program->gvars, strndup(tok->str, tok->len));
+    Var *var = find_gvar(tok);
     if (!var)
         error_at(tok->str, "The variable is not defined.");
     return new_node_gvar(var->name, var->type);
@@ -209,8 +218,8 @@ Node *new_vardef(Type *type)
 Program *parse()
 {
     Program *program = calloc(1, sizeof(Program));
-    program->funcs = new_vec();
-    program->gvars = new_map();
+    funcs = new_vec();
+    gvars = new_map();
 
     while (!at_eof())
     {
@@ -249,7 +258,7 @@ Program *parse()
             char *func_name = strndup(tok->str, tok->len);
             Node *node = new_node_function(func_name, stmt(), params);
             node->return_type = type;
-            vec_push(program->funcs, new_function(node->name, node, lvars));
+            vec_push(funcs, new_function(node->name, node, lvars));
         }
         else
         {
@@ -266,10 +275,12 @@ Program *parse()
                 expect("]");
             }
             Var *var = new_var(tok, type, false);
-            map_put(program->gvars, var->name, var);
+            map_put(gvars, var->name, var);
             expect(";");
         }
     }
+    program->funcs = funcs;
+    program->gvars = gvars;
 
     return program;
 }

@@ -15,8 +15,7 @@ void gen_lval(Node *node)
         gen(node->lhs);
         return;
     case ND_GVAR:
-        // printf("    lea rax, %s[rip]\n", node->name);
-        printf("    mov DWORD PTR %s[rip], rax", node->name);
+        printf("    lea rax, %s[rip]\n", node->name);
         printf("    push rax\n");
         return;
     }

@@ -13,4 +13,8 @@ test: cc
 clean:
 	rm -f cc *.o *~ tmp*
 
+as-show:
+	cc -o cc main.c tokenize.c parse.c codegen.c map.c vector.c register.c util.c
+	./cc ${op}> tmp.s
+
 .PHONY: test clean

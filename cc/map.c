@@ -17,8 +17,11 @@ Map *new_map()
 int map_find(Map *map, void *key)
 {
     for (int i = 0; i < map->keys->len; i++)
-        if (strcmp(map->keys->data[i], key))
+    {
+        Var *gvar = map->elems->data[i];
+        if (!memcmp(gvar->name, key, gvar->len))
             return i;
+    }
     return -1;
 }
 
