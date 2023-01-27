@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 
 /* ------------------------------予約語 ------------------------------ */
 #define D_RETURN "return"
@@ -50,15 +51,12 @@ struct Token
 // 現在着目しているトークン
 extern Token *token;
 
-// 入力プログラム
-extern char *user_input;
-
 // エラーを報告するための関数
 // printfと同じ引数を取る
 void error(char *fmt, ...);
 
 // エラー箇所を報告する
-void error_at(char *loc, char *fmt, ...);
+void error_at(char *loc, char *fmt);
 
 // 次のトークンが期待している記号のときには、トークンを1つ読み進めて
 // 真を返す。それ以外の場合には偽を返す。
@@ -229,9 +227,9 @@ char *get_register_name(int num);
 /* ------------------------------ グローバル変数 ------------------------------ */
 // 現在着目しているトークン
 extern Token *token;
-// 入力プログラム
-extern char *user_input;
 extern Program *program;
+extern char *file_path;
+extern char *source;
 
 /* ------------------------------ ユーティリティ ------------------------------ */
 void swap_node(Node **p, Node **q);

@@ -181,7 +181,9 @@ Node *new_call_func(Token *tok)
             size_t args_len = get_register_list_length();
             if (node->args->len > args_len)
             {
-                error_at(token->str, "Only up to %d function arguments are supported.", args_len);
+                char *msg;
+                sprintf(msg, "Only up to %ld function arguments are supported.", args_len);
+                error_at(token->str, msg);
             }
         }
 
@@ -265,8 +267,11 @@ Program *parse()
 
                 size_t args_len = get_register_list_length();
                 if (params->len > args_len)
-                    error_at(param_tok->str, "Only up to %d function arguments are supported.", args_len);
-
+                {
+                    char *msg;
+                    sprintf(msg, "Only up to %ld function arguments are supported.", args_len);
+                    error_at(param_tok->str, msg);
+                }
                 vec_push(lvars, new_var(param_tok, arg_type, true));
                 vec_push(params, new_node_lvar((params->len + 1) * 8, arg_type));
                 consume(",");

@@ -9,17 +9,27 @@ void error(char *fmt, ...)
     exit(1);
 }
 
-void error_at(char *loc, char *fmt, ...)
+void error_at(char *loc, char *msg)
 {
-    va_list ap;
-    va_start(ap, fmt);
+    char *line = loc;
+    while (source < line && line[-1] != '\n')
+        line--;
 
-    int pos = loc - user_input;
-    fprintf(stderr, "%s\n", user_input);
-    fprintf(stderr, "%*s", pos, " "); // posŒÂ‚Ì‹ó”’‚ðo—Í
-    fprintf(stderr, "^ ");
-    vfprintf(stderr, fmt, ap);
-    fprintf(stderr, "\n");
+    char *end = loc;
+    while (*end != '\n')
+        end++;
+
+    int line_num = 1;
+    for (char *p = source; p < line; p++)
+        if (*p == '\n')
+            line_num++;
+
+    int indent = fprintf(stderr, "%s:%d: ", file_path, line_num);
+    fprintf(stderr, "%.*s\n", (int)(end - line), line);
+
+    int pos = loc - line + indent;
+    fprintf(stderr, "%*s", pos, "");
+    fprintf(stderr, "^ %s\n", msg);
     exit(1);
 }
 
@@ -108,9 +118,9 @@ bool is_reserved_keyword(const char *op, const char *keyword)
     return strncmp(op, keyword, len) == 0 && !is_alnum(op[len]);
 }
 
-Token *tokenize()
+Token *tokenize(char *source)
 {
-    char *p = user_input;
+    char *p = source;
     Token head;
     head.next = NULL;
     Token *cur = &head;
