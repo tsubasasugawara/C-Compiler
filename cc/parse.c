@@ -7,6 +7,8 @@ Map *funcs;
 
 Map *gvars;
 
+Vector *strs;
+
 Type int_ty = {TY_INT, NULL, 1};
 Type char_ty = {TY_CHAR, NULL, 0};
 
@@ -234,6 +236,7 @@ Program *parse()
     Program *program = calloc(1, sizeof(Program));
     funcs = new_map();
     gvars = new_map();
+    strs = new_vec();
 
     while (!at_eof())
     {
@@ -288,6 +291,7 @@ Program *parse()
     }
     program->funcs = funcs;
     program->gvars = gvars;
+    program->strs = strs;
 
     return program;
 }
@@ -526,6 +530,16 @@ Node *primary()
     Type *var_type = parse_type();
     if (var_type)
         return new_vardef(var_type);
+
+    if (consume("\""))
+    {
+        Node *node = new_node(ND_STR);
+        node->str_idx = strs->len;
+        vec_push(strs, strndup(token->str, token->len));
+        token = token->next;
+        expect("\"");
+        return node;
+    }
 
     // ‚»‚¤‚Å‚È‚¯‚ê‚Î”’l‚Ì‚Í‚¸
     return new_node_num(expect_number());

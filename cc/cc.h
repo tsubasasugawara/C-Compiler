@@ -32,6 +32,7 @@ typedef enum
     TK_INT,      // int型
     TK_CHAR,     // char型
     TK_SIZEOF,   // sizeof
+    TK_STR,      // string
 } TokenKind;
 
 typedef struct Token Token;
@@ -150,6 +151,7 @@ typedef enum
     ND_CALL,   // 関数呼び出し
     ND_FUNC,   // 関数定義
     ND_GVAR,   // グローバル変数
+    ND_STR,    // string
 } NodeKind;
 
 typedef struct Node Node;
@@ -180,6 +182,7 @@ struct Node
     char *name;        // kindがND_CALL,ND_GVARの場合のみ使う
     Type *type;        // 変数のときに型を格納
     Type *return_type; // 関数の戻り値の型
+    int str_idx;       // stringのstrsでのインデックス
 };
 
 typedef struct Var Var;
@@ -208,6 +211,7 @@ struct Program
 {
     Map *funcs;
     Map *gvars;
+    Vector *strs;
 };
 
 Program *parse();

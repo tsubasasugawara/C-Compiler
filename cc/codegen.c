@@ -133,6 +133,7 @@ void gen(Node *node)
             printf("    pop rax\n");
             printf("    mov %s, rax\n", register_name);
         }
+        printf("    mov al, 0\n");
         printf("    call %s\n", node->name);
         printf("    push rax\n");
         return;
@@ -143,6 +144,10 @@ void gen(Node *node)
         gen(node->lhs);
         printf("    pop rax\n");
         printf("    mov rax, [rax]\n");
+        printf("    push rax\n");
+        return;
+    case ND_STR:
+        printf("    lea rax, .LC%d[rip]\n", node->str_idx);
         printf("    push rax\n");
         return;
     }
@@ -202,6 +207,12 @@ void gen(Node *node)
     return;
 }
 
+void gen_str(char *str, int index)
+{
+    printf(".LC%d:\n", index);
+    printf("    .string \"%s\"\n", str);
+};
+
 void gen_gvar(Var *gvar)
 {
     printf("    .globl %s\n", gvar->name);
@@ -247,6 +258,11 @@ void codegen()
 {
     // アセンブリの前半部分を出力
     printf("    .intel_syntax noprefix\n");
+
+    for (int i = 0; i < program->strs->len; i++)
+    {
+        gen_str(program->strs->data[i], i);
+    }
 
     printf("    .bss\n");
     for (int i = 0; i < program->gvars->keys->len; i++)

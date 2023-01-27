@@ -140,6 +140,24 @@ Token *tokenize()
             continue;
         }
 
+        if ('"' == *p)
+        {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+
+            int i = 0;
+            while ('"' != *(p + i))
+            {
+                i += 1;
+                continue;
+            }
+            cur = new_token(TK_STR, cur, p, i);
+            p += i;
+
+            assert(*p == '"');
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
         if (is_reserved_keyword(p, D_RETURN))
         {
             size_t keylen = strlen(D_RETURN);

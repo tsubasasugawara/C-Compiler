@@ -486,5 +486,17 @@ int main(){
     return x[1] + y;
 }
 "
+assert 13 '
+int main() {
+    char *a = "Hello";
+    printf(a);
+    return 13;
+}
+'
+assert_output Hello '
+int main() {
+    char *a = "Hello";
+    return printf(a);
+}'
 
 echo OK
